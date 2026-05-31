@@ -5,6 +5,7 @@ A browser mock of the device screen, used to design the UI **before** porting to
 - **Open** `index.html` in any browser (double-click — no server needed).
 - The device panel is the **real resolution: 240 × 536 px** (ESP32-S3-AMOLED-1.91).
 - **Screen** buttons switch views: Now Playing, Browse, Search, Lock.
+- **Orientation** toggles Portrait (240×536, all screens) vs Landscape (536×240, now-playing "media widget" layout). Portrait is the recommended primary (fits the tall device + scrolling lists); landscape shines for now-playing. Avoid dynamic phone-style auto-rotate (perf + 2× design) — prefer a fixed orientation chosen at setup.
 - **View** modes:
   - *Design 2×* / *1× (px)* — work at native pixels (what matters for the LVGL port).
   - *Physical 1:1* — scales to this monitor (~225 PPI, 2560×1600) so it renders at the true ~19.8 × 44.3 mm size. Because the real panel (~308 PPI) is denser than the monitor, true size looks *small* — that's correct.
