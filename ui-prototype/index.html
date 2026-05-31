@@ -130,7 +130,12 @@
   /* settings */
   .set .srow{display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid #15151a;min-height:62px;cursor:pointer;}
   .set .srow .sl{font-size:15px;} .set .srow .sv{font-size:13px;color:var(--dim);display:flex;align-items:center;gap:6px;}
-  .set .srow:not(.toggle) .sv::after{content:"›";color:var(--dim2);font-size:18px;}
+  .set .srow.act .sv::after{content:"›";color:var(--dim2);font-size:18px;}
+  .set .srow.disp{cursor:default;} .set .srow.disp .sv{color:var(--dim2);}
+  .set .sechdr{padding:16px 16px 6px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim2);}
+  .set .step{display:flex;align-items:center;gap:10px;} .set .step b{min-width:46px;text-align:center;color:var(--fg);font-weight:400;}
+  .set .stepbtn{width:30px;height:30px;border-radius:8px;background:#26262c;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--fg);}
+  .setbtn{margin:16px;padding:15px;border-radius:12px;background:#16161b;color:var(--accent);text-align:center;font-weight:600;font-size:14px;cursor:pointer;border:1px solid #2a2a30;line-height:1.3;}
   .tog{width:44px;height:25px;border-radius:13px;background:#2a2a30;position:relative;flex:none;}
   .tog.on{background:var(--accent);} .tog i{position:absolute;top:2px;left:2px;width:21px;height:21px;border-radius:50%;background:#fff;transition:left .15s;} .tog.on i{left:21px;}
   .gear{cursor:pointer;fill:var(--dim);}
@@ -306,17 +311,29 @@
           <div class="view set" data-screen="settings">
             <div class="hdr"><span class="back" data-jump="library">‹</span><span>Settings</span></div>
             <div class="list">
-              <div class="srow"><span class="sl">Device name</span><span class="sv">MA Portable</span></div>
+              <div class="sechdr">On device</div>
               <div class="srow"><span class="sl">Brightness</span><span class="sv">80%</span></div>
               <div class="srow"><span class="sl">Sleep timeout</span><span class="sv">30 s</span></div>
-              <div class="srow"><span class="sl">Audio sync delay</span><span class="sv">0 ms</span></div>
-              <div class="srow"><span class="sl">Calibrate remote</span><span class="sv"></span></div>
+              <div class="srow"><span class="sl">Audio sync delay</span><span class="sv"><span class="step"><span class="stepbtn">−</span><b>0 ms</b><span class="stepbtn">+</span></span></span></div>
               <div class="srow toggle"><span class="sl">Haptics</span><span class="sv"><span class="tog on" data-tog><i></i></span></span></div>
-              <div class="srow"><span class="sl">Wi-Fi</span><span class="sv">HomeNet</span></div>
-              <div class="srow"><span class="sl">Music Assistant</span><span class="sv">Connected</span></div>
-              <div class="srow"><span class="sl">Software update</span><span class="sv">v0.1.0</span></div>
-              <div class="srow"><span class="sl">About</span><span class="sv"></span></div>
+              <div class="srow act"><span class="sl">Calibrate remote</span><span class="sv"></span></div>
+              <div class="sechdr">Status</div>
+              <div class="srow disp"><span class="sl">Device name</span><span class="sv">MA Portable</span></div>
+              <div class="srow disp"><span class="sl">Wi-Fi</span><span class="sv">HomeNet</span></div>
+              <div class="srow disp"><span class="sl">Music Assistant</span><span class="sv">Connected</span></div>
+              <div class="srow disp"><span class="sl">Firmware</span><span class="sv">v0.1.0</span></div>
+              <div class="setbtn" data-jump="apmode">⚙ Wi-Fi Setup<br><span style="font-size:11px;color:var(--dim);font-weight:400">change name · network · server · update</span></div>
             </div>
+          </div>
+
+          <!-- AP / SETUP MODE -->
+          <div class="view state" data-screen="apmode">
+            <div class="logo" style="font-size:20px">Setup Mode</div>
+            <div class="msg">Join this Wi-Fi on your phone:<br><b style="color:#fff">MA-ESPortable-A1B2</b></div>
+            <div class="sub">then open <b style="color:#cfd2d8">http://192.168.4.1</b> in a browser</div>
+            <div class="spinner" style="margin-top:22px;width:30px;height:30px"></div>
+            <div class="sub" style="margin-top:14px">waiting for setup…</div>
+            <div class="ver"><span data-jump="settings" style="cursor:pointer">‹ cancel &amp; reboot</span></div>
           </div>
 
           <!-- LOCK -->
@@ -390,7 +407,7 @@
     const top=orient==='land'?'now-land':stack[stack.length-1];
     scr.classList.toggle('land',orient==='land');
     scr.querySelectorAll('.view').forEach(v=>v.classList.toggle('show',v.dataset.screen===top));
-    const map={now:'now','now-land':'now',library:'library',list:'library',album:'library',queue:'queue',lock:'lock',settings:'settings',boot:'boot',connecting:'connecting',charging:'charging'};
+    const map={now:'now','now-land':'now',library:'library',list:'library',album:'library',queue:'queue',lock:'lock',settings:'settings',apmode:'settings',boot:'boot',connecting:'connecting',charging:'charging'};
     document.querySelectorAll('#screenBtns button, #stateBtns button').forEach(b=>b.classList.toggle('active',b.dataset.jump===map[top]));
     applyMarquee();
   }
