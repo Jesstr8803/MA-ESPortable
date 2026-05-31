@@ -145,6 +145,31 @@ reproducibility constraint.
   zero-driver like the predecessor's PCM5102A, but bounded and one-time).
 - **Bluetooth:** dropped — it undercuts the wired-quality goal and the S3 can't do A2DP anyway.
 
+## Power tree
+
+```
+USB-C 5V ──► [board's charger] ── charges cell + power-path ──► board system (S3 + AMOLED + 3V3)
+CELL ──[DW01A + dual-MOSFET protection]── VBAT ──┬──► board MX1.25 battery input
+ (off-the-shelf, carrier holder)                 ├──► MAX17048 fuel gauge (I²C → accurate %)
+                                                 ├──► LT3042 ultra-low-noise LDO ──► 1.8V analog
+                                                 │       island ──► CS43131  ★audio-critical★
+                                                 └──► DRV2605L haptics (VBAT/3V3)
+Power button ──► short = deep-sleep / long = latch-off      IMU motion-int ──► wake
+```
+
+- **One charger — the board's.** It already charges the cell and runs a power-path, so the device
+  **plays while charging**. We add no second charger (two on one cell is trouble).
+- **Cell on the carrier**, through a **DW01A + dual-MOSFET protection** stage (LCSC C700964) so *any*
+  off-the-shelf cell is safe — then feeds the board's battery input and the carrier rails.
+- **Fuel gauge: MAX17048** (LCSC C2682616) — accurate battery % over I²C (ModelGauge, no sense
+  resistor, 3 µA).
+- **Audio rail is isolated:** CS43131 is fed from **VBAT → LT3042 ultra-low-noise LDO** (LCSC C666568)
+  on its **own analog ground island**, star-tied to system ground, *away* from the board's WiFi/
+  switching noise — **not** off the board's 3.3 V. This is where audio cleanliness is won or lost.
+- **Power-off: both modes.** Short-press → S3 **deep-sleep** (~tens of µA, instant wake via button or
+  IMU motion). Long-press → **true hardware latch-off** (soft-latch load switch; zero drain for
+  storage). The MCU holds the latch enable and releases it on long-press.
+
 ## Control scheme — headphone inline remote
 
 A distinctive feature: control the device from the buttons on the headphone cable, so the
