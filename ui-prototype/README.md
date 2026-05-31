@@ -6,6 +6,7 @@ A browser mock of the device screen, used to design the UI **before** porting to
 - The device panel is the **real resolution: 240 × 536 px** (ESP32-S3-AMOLED-1.91).
 - **Navigable:** Now Playing → **Library (2×2 tile menu: Artists / Albums top, Playlists / Queue bottom)** → list → Album → tap a track to play. Big tiles = easy finger targets. Mini-player bar returns to Now Playing; lists/albums have a back ‹; lock screen = press & hold the ring.
 - **Swipe** (touch or mouse-drag): up = into Library, down/right = back. Coarse swipes suit the tiny screen better than hunting for small chevrons.
+- **On-screen volume:** Now Playing has a volume slider (tall hit zone — tap anywhere or drag) so headphones *without* inline controls can still set volume; it shows the volume overlay as you adjust.
 - **Marquee:** titles that don't fit auto-scroll (try a long track/playlist name). On-device, LVGL does this natively via `LV_LABEL_LONG_SCROLL` — no custom code.
 - **Jump-to** buttons (panel) jump straight to Now Playing / Library / Queue / Lock for quick testing.
 - **States & overlays** (panel): **Boot** splash, **Connecting** to Music Assistant, **Charging** screen, **Settings** (scrollable list — name/brightness/sleep/sync/calibrate-remote/haptics toggle/Wi-Fi/MA/OTA/about), and a transient **Volume overlay** (auto-dismiss). Settings is also reachable via the gear in the Library header.

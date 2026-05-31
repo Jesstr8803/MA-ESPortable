@@ -68,6 +68,13 @@
   .playbtn svg{fill:#000;width:32px;height:32px;}
   .secondary{display:flex;justify-content:center;gap:46px;margin-top:14px;color:var(--dim);}
   .secondary svg{width:26px;height:26px;fill:var(--dim);cursor:pointer;} .secondary svg.on{fill:var(--accent);}
+  /* on-screen volume slider (tall hit zone for fingers) */
+  .volrow{display:flex;align-items:center;gap:10px;margin-top:10px;padding:0 8px;}
+  .volrow>svg{width:18px;height:18px;fill:var(--dim);flex:none;}
+  .vslider{flex:1;height:32px;display:flex;align-items:center;cursor:pointer;touch-action:none;}
+  .vtrack{width:100%;height:8px;background:#2a2a30;border-radius:4px;}
+  .vfill{display:block;height:100%;background:var(--accent);border-radius:4px;}
+  .npland .volrow{margin-top:12px;padding:0;}
 
   /* now playing landscape */
   .npland{display:flex;height:100%;padding:16px;gap:16px;align-items:center;position:relative;}
@@ -228,6 +235,11 @@
                 <span class="playbtn" data-toggleplay><svg id="ppIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
                 <span class="iconbtn"><svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM5 18l10-6L5 6z"/></svg></span>
               </div>
+              <div class="volrow">
+                <svg viewBox="0 0 24 24"><path d="M5 10v4h3l4 4V6L8 10H5z"/></svg>
+                <div class="vslider"><div class="vtrack"><i class="vfill" style="width:65%"></i></div></div>
+                <svg viewBox="0 0 24 24"><path d="M5 10v4h3l4 4V6L8 10H5zm9 2a4 4 0 00-2-3.46v6.92A4 4 0 0014 12z"/></svg>
+              </div>
               <div class="secondary">
                 <svg viewBox="0 0 24 24"><path d="M10.6 9.4 7.9 6.7 9.3 5.3 12 8l2.7-2.7 1.4 1.4L13.4 9.4M3 7l2 2H3m18 0h-2l2-2m-7 6 2.7 2.7-1.4 1.4L14 14.6l-2.7 2.7-1.4-1.4L12.6 13z"/></svg>
                 <svg class="on" viewBox="0 0 24 24"><path d="M9 3v2H5v3H3V3h6m12 0v5h-2V5h-4V3h6M3 16h2v3h4v2H3v-5m18 0v5h-6v-2h4v-3h2z"/></svg>
@@ -250,6 +262,11 @@
                   <span class="iconbtn"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zM9 12l10 6V6z"/></svg></span>
                   <span class="playbtn" data-toggleplay><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
                   <span class="iconbtn"><svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM5 18l10-6L5 6z"/></svg></span>
+                </div>
+                <div class="volrow">
+                  <svg viewBox="0 0 24 24"><path d="M5 10v4h3l4 4V6L8 10H5z"/></svg>
+                  <div class="vslider"><div class="vtrack"><i class="vfill" style="width:65%"></i></div></div>
+                  <svg viewBox="0 0 24 24"><path d="M5 10v4h3l4 4V6L8 10H5zm9 2a4 4 0 00-2-3.46v6.92A4 4 0 0014 12z"/></svg>
                 </div>
               </div>
             </div>
@@ -428,10 +445,21 @@
     if(jump_){ const n=jump_.dataset.jump; if(n==='queue') renderQueue(); jump(n); return; }
   });
 
+  /* volume slider (on-screen, for headphones without inline controls) */
+  let vDragging=false, vEl=null;
+  function setVol(s,clientX){ const r=s.getBoundingClientRect(); let p=(clientX-r.left)/r.width; p=Math.max(0,Math.min(1,p));
+    const pct=Math.round(p*100); document.querySelectorAll('.vfill').forEach(f=>f.style.width=pct+'%');
+    const vb=document.getElementById('volBar'); if(vb)vb.style.width=pct+'%';
+    const vp=document.getElementById('volPct'); if(vp)vp.textContent='Volume '+pct+'%'; showVol(); }
+
   /* swipe nav */
-  let sx=0,sy=0,swiped=false;
-  scr.addEventListener('pointerdown',e=>{ sx=e.clientX; sy=e.clientY; swiped=false; });
+  let sx=0,sy=0,swiped=false,startedOnVol=false;
+  scr.addEventListener('pointerdown',e=>{ sx=e.clientX; sy=e.clientY; swiped=false;
+    const s=e.target.closest('.vslider'); startedOnVol=!!s; if(s){ vDragging=true; vEl=s; setVol(s,e.clientX); } });
+  scr.addEventListener('pointermove',e=>{ if(vDragging&&vEl) setVol(vEl,e.clientX); });
+  window.addEventListener('pointerup',()=>{ vDragging=false; vEl=null; });
   scr.addEventListener('pointerup',e=>{
+    if(startedOnVol){ startedOnVol=false; return; }   // adjusting volume, not swiping
     const dx=e.clientX-sx, dy=e.clientY-sy; if(Math.hypot(dx,dy)<22) return; swiped=true;
     const top=stack[stack.length-1];
     if(Math.abs(dx)>Math.abs(dy)){ if(dx>0 && top!=='now') back(); }
