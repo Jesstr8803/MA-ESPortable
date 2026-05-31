@@ -60,7 +60,7 @@ rather than stored locally.
 | **Display** | **Waveshare ESP32-S3-AMOLED-1.91 (touch)** — 240×536 AMOLED bar (QSPI). Premium look; burn-in mitigated by screen-sleep + dimming + periodic pixel-shift. See Reproducibility below. |
 | **Audio** | Our own I²S DAC + headphone amp (PCM510x-class line-out + small stereo HP amp like TPA6132, *or* an integrated codec — revisit at PCB time). Predecessor's PCM510x code carries over. |
 | **Jack** | 4-conductor **TRRS** so we can read the headphone inline remote (see Control scheme). |
-| **Power** | LiPo + PMIC (likely AXP2101). Target 10+ h via screen-sleep + WiFi power-save + deep buffer. Battery is the dominant size driver. |
+| **Power** | Onboard charging (board's MX1.25 header). **Battery: deferred** — principle is an *off-the-shelf swappable cell* (not a glued pouch) that fits behind the board; thickness budget → capacity → runtime. Stretch runtime via screen-sleep + WiFi power-save + deep buffer. |
 | **Sensors** | QMI8658 6-axis IMU (wake-on-pickup). Haptic motor. |
 | **Build** | **Prototype on the Waveshare ESP32-S3-AMOLED-1.91 (touch)** + DAC + TRRS breakouts → then a **custom carrier/shield PCB** on its 20-pin headers → resin-printed v1 enclosure → CNC-aluminum v2. |
 
