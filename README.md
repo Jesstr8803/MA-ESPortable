@@ -170,6 +170,21 @@ Power button ──► short = deep-sleep / long = latch-off      IMU motion-int
   IMU motion). Long-press → **true hardware latch-off** (soft-latch load switch; zero drain for
   storage). The MCU holds the latch enable and releases it on long-press.
 
+## UI design principles
+
+The panel is tiny — **19.8 × 44.3 mm** (smaller than a stick of gum). The UI leans into that:
+
+- **Glanceable + remote-first.** The headphone remote handles play/skip/volume without looking; the
+  IMU wakes the screen; touch is for *glances* and light navigation, not constant poking.
+- **Big, sparse touch targets.** A fingertip is ~8–10 mm — half the screen width per button — so
+  layouts stay simple with large hit areas. No dense UIs.
+- **Browse over search.** A full keyboard on a 20 mm screen is miserable to type on, so we lean on
+  list browsing and minimize typing (rethink search input if it's really needed).
+- **Orientation: portrait primary** (fits the tall bar + scrolling lists). Landscape is an optional
+  *fixed* setting (a now-playing "media widget" layout), **not** dynamic auto-rotate (saves the
+  runtime-rotation cost and avoids designing every screen twice).
+- Pure-black AMOLED theme (pixels off = power saved). Prototype: `ui-prototype/index.html`.
+
 ## Control scheme — headphone inline remote
 
 A distinctive feature: control the device from the buttons on the headphone cable, so the
