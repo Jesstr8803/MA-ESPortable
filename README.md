@@ -57,12 +57,12 @@ rather than stored locally.
 |---|---|
 | **Platform** | **ESP / ESP-IDF** (decided). Keeps the official `sendspin-cpp` SDK + predecessor code, and the MCU battery/instant-on advantage. Linux SBC rejected (would gut battery + instant-on). |
 | **MCU** | **ESP32-S3** by default (8 MB PSRAM, 16 MB flash — enough for LVGL framebuffers + a deep audio buffer). **Escalate to ESP32-P4 + C6** only if the spike proves the S3 can't drive the GUI/Tier-2 smoothly. The spike *is* the S3-vs-P4 test. |
-| **Display** | AMOLED (premium look). Burn-in mitigated by screen-sleep + dimming + periodic pixel-shift. Uses a QSPI display driver. |
+| **Display** | **Waveshare ESP32-S3-AMOLED-1.91 (touch)** — 240×536 AMOLED bar (QSPI). Premium look; burn-in mitigated by screen-sleep + dimming + periodic pixel-shift. See Reproducibility below. |
 | **Audio** | Our own I²S DAC + headphone amp (PCM510x-class line-out + small stereo HP amp like TPA6132, *or* an integrated codec — revisit at PCB time). Predecessor's PCM510x code carries over. |
 | **Jack** | 4-conductor **TRRS** so we can read the headphone inline remote (see Control scheme). |
 | **Power** | LiPo + PMIC (likely AXP2101). Target 10+ h via screen-sleep + WiFi power-save + deep buffer. Battery is the dominant size driver. |
 | **Sensors** | QMI8658 6-axis IMU (wake-on-pickup). Haptic motor. |
-| **Build** | **Prototype on an AMOLED dev board** (e.g. Waveshare ESP32-S3-Touch-AMOLED-1.8, 368×448) + DAC + TRRS breakouts → then a **custom PCB** → resin-printed v1 enclosure → CNC-aluminum v2. |
+| **Build** | **Prototype on the Waveshare ESP32-S3-AMOLED-1.91 (touch)** + DAC + TRRS breakouts → then a **custom carrier/shield PCB** on its 20-pin headers → resin-printed v1 enclosure → CNC-aluminum v2. |
 
 ## Reproducibility & hardware architecture
 
@@ -80,11 +80,15 @@ web-flasher on GitHub Pages).
 - **Reproduction = "buy Waveshare board + order the carrier from JLCPCB (or buy it assembled on
   Tindie) + print the STLs + assemble."**
 
-**Leading display board: ESP32-S3-Touch-AMOLED-1.8** (368×448) — exposes **7 GPIO + I²C + UART +
-1 mm-pitch expansion pads**, which is *just enough* for the carrier's needs (I²S ×3, ADC ×1,
-haptic ×1, jack-detect ×1, + shared I²C). The 1.75″ exposes only ~3 GPIO — likely too few.
-⚠️ **Gating check:** confirm those 7 GPIOs are actually free and that I²S can route to them — with
-8 MB **octal** PSRAM, GPIO35/36/37 are reserved for PSRAM and can't be used for I²S.
+**Display board (chosen): Waveshare ESP32-S3-AMOLED-1.91, touch version** — a slim **240×536
+AMOLED bar**. It exposes **2× 20-pin headers (~27 GPIO, 8 ADC, 2 I²C, SPI)**, so the carrier
+mounts as a clean shield with plenty of headroom (I²S ×3, ADC remote-sense, haptic, jack-detect,
+fuel gauge, power button). Onboard: ESP32-S3R8 (8 MB PSRAM, 16 MB flash), QMI8658 IMU, USB-C, and
+an MX1.25 LiPo charge/discharge header. The tall-narrow shape suits both a vertical now-playing
+layout and scrolling library lists.
+⚠️ **Order the *touch* variant** (it also ships non-touch). With 8 MB **octal** PSRAM, GPIO35/36/37
+are reserved for PSRAM — route I²S to other exposed pins via the GPIO matrix. *(Earlier candidate:
+ESP32-S3-Touch-AMOLED-1.8 (368×448, only 7 GPIO) — now a fallback.)*
 
 **PCB design-for-manufacture:** hand-solderable (larger SMD, no fine-pitch QFN) so DIYers can
 build, *plus* a JLCPCB-Assembly BOM/CPL for pre-assembled / Tindie batches. Prefer LCSC "Basic"
