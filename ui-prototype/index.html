@@ -60,13 +60,19 @@
   .track .album{font-size:11px;color:var(--dim2);margin-top:2px;}
   .progress{margin-top:14px;} .bar{height:4px;background:#2a2a30;border-radius:2px;overflow:hidden;} .bar i{display:block;height:100%;width:38%;background:var(--accent);border-radius:2px;}
   .times{display:flex;justify-content:space-between;font-size:10px;color:var(--dim2);margin-top:5px;}
-  .transport{display:flex;align-items:center;justify-content:space-between;margin-top:16px;padding:0 6px;}
-  .transport svg{fill:var(--fg);cursor:pointer;}
-  .iconbtn{display:flex;align-items:center;justify-content:center;}
-  .playbtn{width:60px;height:60px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;}
-  .playbtn svg{fill:#000;width:26px;height:26px;}
-  .secondary{display:flex;justify-content:space-between;margin-top:18px;padding:0 14px;color:var(--dim);}
-  .secondary svg{width:18px;height:18px;fill:var(--dim);cursor:pointer;} .secondary svg.on{fill:var(--accent);}
+  .transport{display:flex;align-items:center;justify-content:space-around;margin-top:18px;padding:0 4px;}
+  .transport .iconbtn svg{fill:var(--fg);cursor:pointer;width:34px;height:34px;}
+  .iconbtn{display:flex;align-items:center;justify-content:center;width:60px;height:60px;}
+  .playbtn{width:80px;height:80px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+  .playbtn svg{fill:#000;width:32px;height:32px;}
+  .secondary{display:flex;justify-content:center;gap:64px;margin-top:14px;color:var(--dim);}
+  .secondary svg{width:26px;height:26px;fill:var(--dim);cursor:pointer;} .secondary svg.on{fill:var(--accent);}
+
+  /* fingertip puck (~9 mm = 109 px on this panel) */
+  .finger{position:absolute;width:109px;height:109px;border-radius:50%;
+    background:rgba(90,200,250,.22);border:2px solid rgba(90,200,250,.85);
+    transform:translate(-50%,-50%);pointer-events:none;display:none;z-index:60;
+    align-items:center;justify-content:center;font-size:11px;color:#bfeaff;}
 
   /* now playing landscape */
   .npland{display:flex;height:100%;padding:16px;gap:16px;align-items:center;position:relative;}
@@ -81,9 +87,9 @@
   .hdr{padding:6px 12px 8px;font-size:16px;font-weight:700;display:flex;align-items:center;gap:6px;flex:none;}
   .hdr .back{cursor:pointer;color:var(--dim);font-size:22px;line-height:1;}
   .list{flex:1;overflow:auto;}
-  .row{display:flex;align-items:center;gap:11px;padding:9px 14px;border-bottom:1px solid #15151a;cursor:pointer;}
+  .row{display:flex;align-items:center;gap:12px;padding:15px 14px;border-bottom:1px solid #15151a;cursor:pointer;min-height:76px;}
   .row:active{background:#101015;}
-  .row .thumb{width:42px;height:42px;border-radius:6px;flex:none;background:linear-gradient(135deg,#444,#222);}
+  .row .thumb{width:46px;height:46px;border-radius:6px;flex:none;background:linear-gradient(135deg,#444,#222);}
   .row .thumb.a{background:linear-gradient(135deg,#3a2b6e,#b14a8a);} .row .thumb.b{background:linear-gradient(135deg,#1f6e5a,#4ab1a0);} .row .thumb.c{background:linear-gradient(135deg,#6e5a1f,#c9a14a);}
   .row .num{width:18px;text-align:center;color:var(--dim2);font-size:13px;flex:none;}
   .row .meta{flex:1;min-width:0;} .row .meta .t{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;} .row .meta .s{font-size:11px;color:var(--dim);}
@@ -138,6 +144,10 @@
       <button data-view="phys">Physical 1:1</button>
     </div>
 
+    <h2>Touch check</h2>
+    <div class="btnrow"><button id="fingerBtn">Show ⌀9 mm fingertip</button></div>
+    <div class="rulercap">Drag it over the UI — anything smaller than this circle is fiddly for a finger.</div>
+
     <label>Calibration (Physical 1:1): <span id="calVal">1.00</span></label>
     <input type="range" id="cal" min="0.6" max="1.6" step="0.01" value="1.0" />
     <div class="ruler" id="ruler"></div>
@@ -150,6 +160,7 @@
     <div class="device-wrap" id="deviceWrap">
       <div class="bezel">
         <div class="screen" id="screen">
+          <div class="finger" id="finger">9mm</div>
 
           <!-- NOW PLAYING (portrait) -->
           <div class="view" data-screen="now">
@@ -172,10 +183,9 @@
               </div>
               <div class="secondary">
                 <svg viewBox="0 0 24 24"><path d="M10.6 9.4 7.9 6.7 9.3 5.3 12 8l2.7-2.7 1.4 1.4L13.4 9.4M3 7l2 2H3m18 0h-2l2-2m-7 6 2.7 2.7-1.4 1.4L14 14.6l-2.7 2.7-1.4-1.4L12.6 13z"/></svg>
-                <svg viewBox="0 0 24 24"><path d="M9 3v2H5v3H3V3h6m12 0v5h-2V5h-4V3h6M3 16h2v3h4v2H3v-5m18 0v5h-6v-2h4v-3h2z"/></svg>
-                <svg data-go="queue" viewBox="0 0 24 24"><path d="M3 9h2v6H3zm4-2h2v10H7zm4-3h2v16h-2zm4 3h2v10h-2zm4 2h2v6h-2z"/></svg>
-                <svg data-jump="lock" viewBox="0 0 24 24"><path d="M12 17a2 2 0 002-2 2 2 0 00-2-2 2 2 0 00-2 2 2 2 0 002 2m6-9a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V10a2 2 0 012-2h1V6a5 5 0 0110 0v2h1M12 3a3 3 0 00-3 3v2h6V6a3 3 0 00-3-3z"/></svg>
+                <svg class="on" viewBox="0 0 24 24"><path d="M9 3v2H5v3H3V3h6m12 0v5h-2V5h-4V3h6M3 16h2v3h4v2H3v-5m18 0v5h-6v-2h4v-3h2z"/></svg>
               </div>
+              <!-- queue/lock moved off-screen: reach via swipe / tabs / timeout (kept tiny icons would be ~1.5mm = untappable) -->
             </div>
           </div>
 
@@ -356,8 +366,16 @@
   document.querySelectorAll('#orientBtns button').forEach(b=>b.onclick=()=>{ document.querySelectorAll('#orientBtns button').forEach(x=>x.classList.remove('active')); b.classList.add('active'); orient=b.dataset.orient; render(); });
   document.querySelectorAll('#viewBtns button').forEach(b=>b.onclick=()=>{ document.querySelectorAll('#viewBtns button').forEach(x=>x.classList.remove('active')); b.classList.add('active'); viewMode=b.dataset.view; applyView(); });
 
-  let viewMode='2', calib=1.0;
-  function applyView(){ let s; if(viewMode==='phys'){const dpr=window.devicePixelRatio||1; s=(MONITOR_PPI/DISPLAY_PPI)/dpr*calib;} else s=parseFloat(viewMode); wrap.style.transform='scale('+s+')'; }
+  let viewMode='2', calib=1.0, currentScale=2;
+  function applyView(){ let s; if(viewMode==='phys'){const dpr=window.devicePixelRatio||1; s=(MONITOR_PPI/DISPLAY_PPI)/dpr*calib;} else s=parseFloat(viewMode); currentScale=s; wrap.style.transform='scale('+s+')'; }
+
+  /* fingertip puck — drag a ~9 mm circle over the UI to gauge touch targets */
+  let fingerOn=false;
+  const fingerEl=document.getElementById('finger');
+  document.getElementById('fingerBtn').onclick=function(){ fingerOn=!fingerOn; this.classList.toggle('active',fingerOn);
+    this.textContent=fingerOn?'Hide ⌀9 mm fingertip':'Show ⌀9 mm fingertip'; fingerEl.style.display=fingerOn?'flex':'none'; };
+  scr.addEventListener('pointermove',e=>{ if(!fingerOn)return; const r=scr.getBoundingClientRect();
+    fingerEl.style.left=((e.clientX-r.left)/currentScale)+'px'; fingerEl.style.top=((e.clientY-r.top)/currentScale)+'px'; });
   function applyRuler(){ const dpr=window.devicePixelRatio||1; const px=(MONITOR_PPI/25.4)/dpr*calib; document.getElementById('ruler').style.width=(50*px)+'px'; }
   const cal=document.getElementById('cal'); cal.oninput=()=>{ calib=parseFloat(cal.value); document.getElementById('calVal').textContent=calib.toFixed(2); applyView(); applyRuler(); };
 

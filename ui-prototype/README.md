@@ -9,6 +9,7 @@ A browser mock of the device screen, used to design the UI **before** porting to
 - **Jump-to** buttons (panel) jump straight to Now Playing / Library / Queue / Lock for quick testing.
 - **Orientation** toggles Portrait (240×536, all screens) vs Landscape (536×240, now-playing "media widget"). Portrait is the recommended primary (tall device + scrolling lists); landscape shines for now-playing. Prefer a fixed orientation chosen at setup over dynamic auto-rotate (perf + 2× design).
 - (Search was dropped for v1 — browse-first + search-from-phone; voice search reserved for the future.)
+- **Touch sizing:** targets are enlarged for fingers (rows ~76 px ≈ 6 mm, play ~80 px, transport hit-areas 60 px), tiny secondary icons removed (queue/lock reached via swipe/tabs/timeout). The **Touch check** panel shows a draggable **⌀9 mm fingertip** circle — drag it over the UI; anything smaller than the circle is fiddly. Recommended target ≈9 mm (≈109 px on this 308-PPI panel). The real mitigation is leaning on **swipes** (no precision needed) over precise taps.
 - **View** modes:
   - *Design 2×* / *1× (px)* — work at native pixels (what matters for the LVGL port).
   - *Physical 1:1* — scales to this monitor (~225 PPI, 2560×1600) so it renders at the true ~19.8 × 44.3 mm size. Because the real panel (~308 PPI) is denser than the monitor, true size looks *small* — that's correct.
