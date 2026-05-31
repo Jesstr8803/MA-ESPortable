@@ -178,8 +178,11 @@ The panel is tiny — **19.8 × 44.3 mm** (smaller than a stick of gum). The UI 
   IMU wakes the screen; touch is for *glances* and light navigation, not constant poking.
 - **Big, sparse touch targets.** A fingertip is ~8–10 mm — half the screen width per button — so
   layouts stay simple with large hit areas. No dense UIs.
-- **Browse over search.** A full keyboard on a 20 mm screen is miserable to type on, so we lean on
-  list browsing and minimize typing (rethink search input if it's really needed).
+- **No on-device text search (v1).** A full keyboard on a 20 mm screen is miserable. Cover it with
+  browse-first (artists/albums/playlists/recently-played/queue) + *search from your phone* to start
+  playback. **Voice search** is the future replacement (its own mini-project — open-vocab STT needs
+  a mic + cloud or Home Assistant Assist). We **reserve mic footprints** now (see below), build voice
+  later.
 - **Orientation: portrait primary** (fits the tall bar + scrolling lists). Landscape is an optional
   *fixed* setting (a now-playing "media widget" layout), **not** dynamic auto-rotate (saves the
   runtime-rotation cost and avoids designing every screen twice).
@@ -212,6 +215,11 @@ minimalist slab needs no face buttons.
   connected" UI state, and power savings (sense only when plugged).
 - **Firmware:** oversample (~16–64 avg) → classify to calibrated band midpoints → ~30 ms debounce →
   events, with press-and-hold repeat for volume and an optional long-press mapping (seek/next).
+- **Reserved for future voice search** (unpopulated footprints, build later): a *separate AC-coupled
+  tap* off this same mic node (series cap → preamp → spare ADC1) captures the headset mic's audio
+  alongside the DC button-sense — phones do this dual-tap on one mic line (works only with mic'd
+  headsets). Plus an optional **onboard MEMS mic** footprint for mic-less cans / no-headphones. Both
+  cost ~nothing as unpopulated pads and avoid a board respin if voice is added.
 
 ## Software architecture
 
