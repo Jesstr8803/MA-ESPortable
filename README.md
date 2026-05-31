@@ -90,6 +90,11 @@ web-flasher on GitHub Pages).
 - Our **carrier PCB** holds only the analog section: I²S DAC + headphone amp + TRRS jack +
   headphone-remote ADC-sense + haptic driver + jack-detect. It mates to the display board's
   exposed header / castellated pads.
+- **Haptics ("Taptic-style"):** a **TI DRV2605L** driver (LCSC C527464; 100+ built-in effects +
+  closed-loop auto-resonance with overdrive/braking) driving an **LRA** (not a buzzy ERM). Gives
+  crisp designed taps for the buttonless touch UI. *The LRA must be rigidly bonded to the chassis*
+  — half the feel is mechanical (an enclosure constraint). Won't match Apple's bespoke Taptic
+  Engine, but uses the same LRA + waveform-engine architecture.
 - **Reproduction = "buy Waveshare board + order the carrier from JLCPCB (or buy it assembled on
   Tindie) + print the STLs + assemble."**
 
