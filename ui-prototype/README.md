@@ -4,8 +4,9 @@ A browser mock of the device screen, used to design the UI **before** porting to
 
 - **Open** `index.html` in any browser (double-click — no server needed).
 - The device panel is the **real resolution: 240 × 536 px** (ESP32-S3-AMOLED-1.91).
-- **Navigable:** tap through it — Now Playing → Library (Artists/Albums/Playlists/Queue) → Album → tap a track to play. Mini-player bar returns to Now Playing; album drill-down has a back ‹; lock screen = press & hold the ring.
-- **Swipe** (touch or mouse-drag): up = into Library, down = back to Now Playing, ←/→ on Library = change tabs, right = back. Coarse swipes suit the tiny screen better than hunting for small chevrons.
+- **Navigable:** Now Playing → **Library (2×2 tile menu: Artists / Albums top, Playlists / Queue bottom)** → list → Album → tap a track to play. Big tiles = easy finger targets. Mini-player bar returns to Now Playing; lists/albums have a back ‹; lock screen = press & hold the ring.
+- **Swipe** (touch or mouse-drag): up = into Library, down/right = back. Coarse swipes suit the tiny screen better than hunting for small chevrons.
+- **Marquee:** titles that don't fit auto-scroll (try a long track/playlist name). On-device, LVGL does this natively via `LV_LABEL_LONG_SCROLL` — no custom code.
 - **Jump-to** buttons (panel) jump straight to Now Playing / Library / Queue / Lock for quick testing.
 - **Orientation** toggles Portrait (240×536, all screens) vs Landscape (536×240, now-playing "media widget"). Portrait is the recommended primary (tall device + scrolling lists); landscape shines for now-playing. Prefer a fixed orientation chosen at setup over dynamic auto-rotate (perf + 2× design).
 - (Search was dropped for v1 — browse-first + search-from-phone; voice search reserved for the future.)
