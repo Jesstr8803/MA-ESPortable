@@ -1,6 +1,9 @@
 # Claude local settings (machine-specific paths)
 .claude/settings.local.json
 
+# MCP server config (machine-specific absolute paths to local bridge)
+.mcp.json
+
 # Build artifacts (adjust once toolchain is chosen)
 build/
 managed_components/
