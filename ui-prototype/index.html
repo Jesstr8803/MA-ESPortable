@@ -5,149 +5,124 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>MA-ESPortable · UI Prototype</title>
 <!--
-  MA-ESPortable UI prototype.
-  - Device screen is the REAL panel size: 240 x 536 px (ESP32-S3-AMOLED-1.91).
-  - "Physical 1:1" mode scales to this machine's monitor (~225 PPI, 2560x1600 / 13.4").
-    Use the calibration slider + the 50 mm ruler to make it exact against a real ruler.
-  - Structured like LVGL widgets (one .screen per view, simple boxes) so it ports cleanly.
+  MA-ESPortable UI prototype (navigable).
+  - Device screen = real panel: 240 x 536 px (ESP32-S3-AMOLED-1.91).
+  - Tap through it: Now Playing <-> Library (Artists/Albums/Playlists/Queue) -> Album -> play.
+    Mini-player bar, drill-down + back, hold-to-unlock. Lock/wake via the panel.
+  - "Physical 1:1" scales to this monitor (~225 PPI); calibrate with the 50 mm ruler.
+  - Structured like LVGL widgets (one .view per screen) for clean porting.
 -->
 <style>
-  :root{
-    --accent:#5AC8FA;      /* active/progress accent */
-    --bg:#000000;          /* true black for AMOLED */
-    --fg:#ffffff;
-    --dim:#9a9aa0;
-    --dim2:#6a6a70;
-    --card:#141417;
-  }
-  *{box-sizing:border-box; -webkit-user-select:none; user-select:none;}
+  :root{ --accent:#5AC8FA; --bg:#000; --fg:#fff; --dim:#9a9aa0; --dim2:#6a6a70; }
+  *{box-sizing:border-box;-webkit-user-select:none;user-select:none;}
   html,body{margin:0;height:100%;background:#1b1d22;color:#cfd2d8;
     font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;}
   .app{display:flex;gap:28px;padding:24px;align-items:flex-start;flex-wrap:wrap;}
 
-  /* ---- control panel (NOT part of the device) ---- */
-  .panel{width:300px;background:#23262d;border-radius:12px;padding:16px 18px;font-size:13px;}
+  /* control panel (not the device) */
+  .panel{width:280px;background:#23262d;border-radius:12px;padding:16px 18px;font-size:13px;}
   .panel h1{font-size:15px;margin:0 0 4px;color:#fff;}
   .panel .sub{color:#8a8e96;font-size:11px;margin-bottom:14px;line-height:1.4;}
   .panel h2{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#7f8490;margin:16px 0 6px;}
   .btnrow{display:flex;flex-wrap:wrap;gap:6px;}
-  .panel button{background:#31353d;color:#dfe2e8;border:1px solid #3d424b;border-radius:7px;
-    padding:7px 10px;font-size:12px;cursor:pointer;}
+  .panel button{background:#31353d;color:#dfe2e8;border:1px solid #3d424b;border-radius:7px;padding:7px 10px;font-size:12px;cursor:pointer;}
   .panel button.active{background:var(--accent);color:#001;border-color:var(--accent);font-weight:600;}
   .panel label{display:block;margin:10px 0 4px;color:#aeb3bd;}
   .panel input[type=range]{width:100%;}
-  .ruler{height:14px;background:repeating-linear-gradient(90deg,#5AC8FA 0,#5AC8FA 1px,transparent 1px,transparent 10%);
-    border:1px solid #3d424b;border-radius:3px;margin-top:6px;}
+  .ruler{height:14px;background:repeating-linear-gradient(90deg,#5AC8FA 0,#5AC8FA 1px,transparent 1px,transparent 10%);border:1px solid #3d424b;border-radius:3px;margin-top:6px;}
   .rulercap{font-size:10px;color:#7f8490;margin-top:3px;}
-  .specs{font-size:11px;color:#8a8e96;line-height:1.5;margin-top:6px;}
-  .specs b{color:#c9ccd2;}
+  .specs{font-size:11px;color:#8a8e96;line-height:1.5;margin-top:6px;} .specs b{color:#c9ccd2;}
+  .tip{font-size:11px;color:#7f8490;margin-top:10px;line-height:1.4;}
 
-  /* ---- device stage ---- */
-  .stage{flex:1;min-width:300px;display:flex;justify-content:center;align-items:flex-start;
-    padding-top:10px;min-height:560px;}
+  /* device */
+  .stage{flex:1;min-width:300px;display:flex;justify-content:center;align-items:flex-start;padding-top:10px;min-height:560px;}
   .device-wrap{transform-origin:top center;transition:transform .15s ease;}
-  /* the bezel */
-  .bezel{padding:10px;background:linear-gradient(145deg,#2b2b30,#0c0c0e);border-radius:26px;
-    box-shadow:0 10px 40px rgba(0,0,0,.6), inset 0 0 0 1px #000;}
-  /* the actual 240x536 panel */
-  .screen{width:240px;height:536px;background:var(--bg);border-radius:18px;overflow:hidden;
-    position:relative;color:var(--fg);}
-
+  .bezel{padding:10px;background:linear-gradient(145deg,#2b2b30,#0c0c0e);border-radius:26px;box-shadow:0 10px 40px rgba(0,0,0,.6),inset 0 0 0 1px #000;}
+  .screen{width:240px;height:536px;background:var(--bg);border-radius:18px;overflow:hidden;position:relative;color:var(--fg);}
+  .screen.land{width:536px;height:240px;}
   .screen .view{position:absolute;inset:0;display:none;flex-direction:column;}
   .screen .view.show{display:flex;}
 
-  /* status bar */
-  .statusbar{display:flex;justify-content:space-between;align-items:center;
-    padding:8px 14px 4px;font-size:11px;color:var(--dim);}
+  .statusbar{display:flex;justify-content:space-between;align-items:center;padding:8px 14px 4px;font-size:11px;color:var(--dim);flex:none;}
   .statusbar .right{display:flex;align-items:center;gap:6px;}
+  .chev{cursor:pointer;font-size:18px;color:var(--dim);line-height:1;}
   .batt{display:inline-block;width:20px;height:10px;border:1px solid var(--dim);border-radius:2px;position:relative;}
   .batt::after{content:"";position:absolute;right:-3px;top:2px;width:2px;height:4px;background:var(--dim);border-radius:0 1px 1px 0;}
   .batt i{position:absolute;left:1px;top:1px;bottom:1px;width:70%;background:#5ad27a;border-radius:1px;}
 
-  /* ---------- NOW PLAYING ---------- */
-  .np{padding:0 16px;}
-  .art{width:208px;height:208px;margin:6px auto 0;border-radius:12px;
-    background:linear-gradient(135deg,#3a2b6e 0%,#b14a8a 55%,#e8743b 100%);
-    box-shadow:0 8px 24px rgba(177,74,138,.35);display:flex;align-items:center;justify-content:center;}
+  /* now playing */
+  .np{padding:0 16px;flex:1;}
+  .art{width:208px;height:208px;margin:6px auto 0;border-radius:12px;background:linear-gradient(135deg,#3a2b6e,#b14a8a 55%,#e8743b);box-shadow:0 8px 24px rgba(177,74,138,.35);display:flex;align-items:center;justify-content:center;}
   .art svg{width:54px;height:54px;opacity:.85;}
   .track{margin-top:16px;text-align:center;}
   .track .title{font-size:18px;font-weight:700;line-height:1.2;}
   .track .artist{font-size:14px;color:var(--dim);margin-top:3px;}
   .track .album{font-size:11px;color:var(--dim2);margin-top:2px;}
-  .progress{margin-top:14px;}
-  .bar{height:4px;background:#2a2a30;border-radius:2px;overflow:hidden;}
-  .bar i{display:block;height:100%;width:38%;background:var(--accent);border-radius:2px;}
+  .progress{margin-top:14px;} .bar{height:4px;background:#2a2a30;border-radius:2px;overflow:hidden;} .bar i{display:block;height:100%;width:38%;background:var(--accent);border-radius:2px;}
   .times{display:flex;justify-content:space-between;font-size:10px;color:var(--dim2);margin-top:5px;}
   .transport{display:flex;align-items:center;justify-content:space-between;margin-top:16px;padding:0 6px;}
   .transport svg{fill:var(--fg);cursor:pointer;}
   .iconbtn{display:flex;align-items:center;justify-content:center;}
-  .playbtn{width:60px;height:60px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;}
+  .playbtn{width:60px;height:60px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;}
   .playbtn svg{fill:#000;width:26px;height:26px;}
   .secondary{display:flex;justify-content:space-between;margin-top:18px;padding:0 14px;color:var(--dim);}
-  .secondary svg{width:18px;height:18px;fill:var(--dim);cursor:pointer;}
-  .secondary svg.on{fill:var(--accent);}
+  .secondary svg{width:18px;height:18px;fill:var(--dim);cursor:pointer;} .secondary svg.on{fill:var(--accent);}
 
-  /* ---------- NOW PLAYING (LANDSCAPE) ---------- */
-  .screen.land{width:536px;height:240px;}
+  /* now playing landscape */
   .npland{display:flex;height:100%;padding:16px;gap:16px;align-items:center;position:relative;}
-  .npland .art{width:200px;height:200px;margin:0;flex:none;border-radius:12px;}
-  .npland .art svg{width:48px;height:48px;}
+  .npland .art{width:200px;height:200px;margin:0;flex:none;} .npland .art svg{width:48px;height:48px;}
   .npland .side{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;}
-  .npland .title{font-size:21px;font-weight:700;line-height:1.15;}
-  .npland .artist{font-size:14px;color:var(--dim);margin-top:4px;}
-  .npland .album{font-size:11px;color:var(--dim2);margin-top:2px;}
-  .npland .progress{margin-top:16px;}
-  .npland .transport{margin-top:16px;padding:0;justify-content:flex-start;gap:22px;}
-  .npland .playbtn{width:52px;height:52px;}
-  .npland .playbtn svg{width:22px;height:22px;}
+  .npland .title{font-size:21px;font-weight:700;} .npland .artist{font-size:14px;color:var(--dim);margin-top:4px;} .npland .album{font-size:11px;color:var(--dim2);margin-top:2px;}
+  .npland .progress{margin-top:16px;} .npland .transport{margin-top:16px;padding:0;justify-content:flex-start;gap:24px;}
+  .npland .playbtn{width:52px;height:52px;} .npland .playbtn svg{width:22px;height:22px;}
   .npland .lstatus{position:absolute;top:8px;right:14px;font-size:11px;color:var(--dim);display:flex;align-items:center;gap:6px;}
 
-  /* ---------- BROWSE LIST ---------- */
-  .hdr{padding:6px 14px 8px;font-size:17px;font-weight:700;display:flex;align-items:center;gap:8px;}
-  .hdr .back{color:var(--dim);font-weight:400;}
+  /* lists */
+  .hdr{padding:6px 12px 8px;font-size:16px;font-weight:700;display:flex;align-items:center;gap:6px;flex:none;}
+  .hdr .back{cursor:pointer;color:var(--dim);font-size:22px;line-height:1;}
   .list{flex:1;overflow:auto;}
-  .row{display:flex;align-items:center;gap:11px;padding:9px 14px;border-bottom:1px solid #15151a;}
-  .row .thumb{width:42px;height:42px;border-radius:6px;flex:none;
-    background:linear-gradient(135deg,#444,#222);}
-  .row .thumb.a{background:linear-gradient(135deg,#3a2b6e,#b14a8a);}
-  .row .thumb.b{background:linear-gradient(135deg,#1f6e5a,#4ab1a0);}
-  .row .thumb.c{background:linear-gradient(135deg,#6e5a1f,#c9a14a);}
-  .row .meta{flex:1;min-width:0;}
-  .row .meta .t{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .row .meta .s{font-size:11px;color:var(--dim);}
-  .tabbar{display:flex;border-top:1px solid #1a1a20;}
-  .tabbar .tab{flex:1;text-align:center;padding:9px 0;font-size:10px;color:var(--dim2);}
+  .row{display:flex;align-items:center;gap:11px;padding:9px 14px;border-bottom:1px solid #15151a;cursor:pointer;}
+  .row:active{background:#101015;}
+  .row .thumb{width:42px;height:42px;border-radius:6px;flex:none;background:linear-gradient(135deg,#444,#222);}
+  .row .thumb.a{background:linear-gradient(135deg,#3a2b6e,#b14a8a);} .row .thumb.b{background:linear-gradient(135deg,#1f6e5a,#4ab1a0);} .row .thumb.c{background:linear-gradient(135deg,#6e5a1f,#c9a14a);}
+  .row .num{width:18px;text-align:center;color:var(--dim2);font-size:13px;flex:none;}
+  .row .meta{flex:1;min-width:0;} .row .meta .t{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;} .row .meta .s{font-size:11px;color:var(--dim);}
+  .row.playing .t{color:var(--accent);}
+
+  /* mini-player */
+  .mini{display:flex;align-items:center;gap:9px;padding:7px 12px;background:#0f0f12;border-top:1px solid #1a1a20;cursor:pointer;flex:none;}
+  .mini .mt2{width:30px;height:30px;border-radius:5px;background:linear-gradient(135deg,#3a2b6e,#b14a8a);flex:none;}
+  .mini .mm{flex:1;min-width:0;} .mini .mm .t{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;} .mini .mm .s{font-size:10px;color:var(--dim);}
+  .mini svg{width:24px;height:24px;fill:#fff;flex:none;}
+
+  /* tabbar */
+  .tabbar{display:flex;border-top:1px solid #1a1a20;flex:none;}
+  .tabbar .tab{flex:1;text-align:center;padding:9px 0;font-size:10px;color:var(--dim2);cursor:pointer;}
   .tabbar .tab.active{color:var(--accent);}
 
-  /* ---------- SEARCH ---------- */
-  .searchbox{margin:8px 14px;background:#1a1a20;border-radius:9px;padding:9px 12px;color:var(--dim);font-size:13px;}
-  .kbd{margin-top:auto;background:#0d0d10;padding:6px 4px 8px;}
-  .kbd .krow{display:flex;justify-content:center;gap:3px;margin:3px 0;}
-  .kbd .key{flex:1;max-width:22px;text-align:center;background:#26262c;border-radius:4px;padding:7px 0;font-size:11px;}
-
-  /* ---------- LOCK ---------- */
+  /* lock */
   .lock{align-items:center;justify-content:center;text-align:center;}
   .lock .clock{font-size:46px;font-weight:300;letter-spacing:1px;}
-  .lock .mini{margin-top:6px;font-size:12px;color:var(--dim);}
+  .lock .submini{margin-top:6px;font-size:12px;color:var(--dim);}
   .lock .hint{position:absolute;bottom:22px;left:0;right:0;font-size:11px;color:var(--dim2);}
-  .lock .holdring{width:54px;height:54px;border-radius:50%;border:2px solid var(--dim2);margin:22px auto 0;
-    display:flex;align-items:center;justify-content:center;}
+  .holdring{width:60px;height:60px;border-radius:50%;border:3px solid var(--dim2);margin:24px auto 0;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .8s linear,transform .1s;}
+  .holdring.holding{border-color:var(--accent);transform:scale(1.05);}
+  .holdring svg{fill:var(--dim);}
 </style>
 </head>
 <body>
 <div class="app">
 
-  <!-- ===== CONTROL PANEL (not part of the device) ===== -->
   <div class="panel">
     <h1>MA-ESPortable · UI prototype</h1>
-    <div class="sub">A 1:1 mock of the ESP32-S3-AMOLED-1.91 panel for designing the UI before porting to LVGL.</div>
+    <div class="sub">Navigable 1:1 mock of the ESP32-S3-AMOLED-1.91 (240×536). Tap through it like the real device.</div>
 
-    <h2>Screen</h2>
+    <h2>Jump to</h2>
     <div class="btnrow" id="screenBtns">
-      <button data-screen="now" class="active">Now Playing</button>
-      <button data-screen="browse">Browse</button>
-      <button data-screen="search">Search</button>
-      <button data-screen="lock">Lock</button>
+      <button data-jump="now" class="active">Now Playing</button>
+      <button data-jump="browse">Library</button>
+      <button data-jump="queue">Queue</button>
+      <button data-jump="lock">Lock</button>
     </div>
 
     <h2>Orientation</h2>
@@ -158,131 +133,103 @@
 
     <h2>View</h2>
     <div class="btnrow" id="viewBtns">
-      <button data-view="2" class="active">Design 2&times;</button>
-      <button data-view="1">1&times; (px)</button>
+      <button data-view="2" class="active">Design 2×</button>
+      <button data-view="1">1× (px)</button>
       <button data-view="phys">Physical 1:1</button>
     </div>
 
-    <label>Calibration (for Physical 1:1): <span id="calVal">1.00</span></label>
+    <label>Calibration (Physical 1:1): <span id="calVal">1.00</span></label>
     <input type="range" id="cal" min="0.6" max="1.6" step="0.01" value="1.0" />
     <div class="ruler" id="ruler"></div>
-    <div class="rulercap">↑ adjust until this bar measures <b>50&nbsp;mm</b> with a real ruler, then Physical 1:1 is exact</div>
+    <div class="rulercap">↑ adjust until this measures <b>50&nbsp;mm</b> with a real ruler</div>
 
-    <h2>Specs</h2>
-    <div class="specs">
-      Panel: <b>240&times;536</b>, 1.91″, ≈<b>19.8&times;44.3&nbsp;mm</b>, ~308&nbsp;PPI<br>
-      This monitor: <b>2560&times;1600</b>, ~225&nbsp;PPI<br>
-      devicePixelRatio: <b id="dpr">?</b>
-    </div>
+    <div class="tip"><b>Swipe</b> (touch or mouse-drag): up = Library, down = back to Now Playing, ←/→ on Library = change tabs, right = back.<br>Or tap: album → track to play; mini-bar → Now Playing; lock screen = press &amp; hold the ring.</div>
   </div>
 
-  <!-- ===== DEVICE ===== -->
   <div class="stage">
     <div class="device-wrap" id="deviceWrap">
       <div class="bezel">
         <div class="screen" id="screen">
 
-          <!-- NOW PLAYING -->
-          <div class="view show" data-screen="now">
+          <!-- NOW PLAYING (portrait) -->
+          <div class="view" data-screen="now">
             <div class="statusbar">
-              <span id="clk1">9:41</span>
+              <span class="chev" data-go="browse">⌄</span>
               <span class="right"><span>Living Room</span><span class="batt"><i></i></span></span>
             </div>
             <div class="np">
-              <div class="art">
-                <svg viewBox="0 0 24 24"><path fill="#fff" d="M12 3v10.55A4 4 0 1014 17V7h4V3h-6z"/></svg>
-              </div>
+              <div class="art"><svg viewBox="0 0 24 24"><path fill="#fff" d="M12 3v10.55A4 4 0 1014 17V7h4V3h-6z"/></svg></div>
               <div class="track">
-                <div class="title">Midnight City</div>
-                <div class="artist">M83</div>
-                <div class="album">Hurry Up, We're Dreaming</div>
+                <div class="title" id="npTitle">Midnight City</div>
+                <div class="artist" id="npArtist">M83</div>
+                <div class="album" id="npAlbum">Hurry Up, We're Dreaming</div>
               </div>
-              <div class="progress">
-                <div class="bar"><i></i></div>
-                <div class="times"><span>1:34</span><span>4:03</span></div>
-              </div>
+              <div class="progress"><div class="bar"><i></i></div><div class="times"><span>1:34</span><span>4:03</span></div></div>
               <div class="transport">
                 <span class="iconbtn"><svg width="26" height="26" viewBox="0 0 24 24"><path d="M6 6h2v12H6zM9 12l10 6V6z"/></svg></span>
-                <span class="playbtn"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
+                <span class="playbtn" data-toggleplay><svg id="ppIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
                 <span class="iconbtn"><svg width="26" height="26" viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM5 18l10-6L5 6z"/></svg></span>
               </div>
               <div class="secondary">
                 <svg viewBox="0 0 24 24"><path d="M10.6 9.4 7.9 6.7 9.3 5.3 12 8l2.7-2.7 1.4 1.4L13.4 9.4M3 7l2 2H3m18 0h-2l2-2m-7 6 2.7 2.7-1.4 1.4L14 14.6l-2.7 2.7-1.4-1.4L12.6 13z"/></svg>
                 <svg viewBox="0 0 24 24"><path d="M9 3v2H5v3H3V3h6m12 0v5h-2V5h-4V3h6M3 16h2v3h4v2H3v-5m18 0v5h-6v-2h4v-3h2z"/></svg>
-                <svg class="on" viewBox="0 0 24 24"><path d="M3 9h2v6H3zm4-2h2v10H7zm4-3h2v16h-2zm4 3h2v10h-2zm4 2h2v6h-2z"/></svg>
-                <svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 013 3v6a3 3 0 01-6 0V5a3 3 0 013-3m7 9a7 7 0 01-6 6.92V21h-2v-3.08A7 7 0 015 11h2a5 5 0 0010 0z"/></svg>
+                <svg data-go="queue" viewBox="0 0 24 24"><path d="M3 9h2v6H3zm4-2h2v10H7zm4-3h2v16h-2zm4 3h2v10h-2zm4 2h2v6h-2z"/></svg>
+                <svg data-jump="lock" viewBox="0 0 24 24"><path d="M12 17a2 2 0 002-2 2 2 0 00-2-2 2 2 0 00-2 2 2 2 0 002 2m6-9a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V10a2 2 0 012-2h1V6a5 5 0 0110 0v2h1M12 3a3 3 0 00-3 3v2h6V6a3 3 0 00-3-3z"/></svg>
               </div>
             </div>
           </div>
 
-          <!-- NOW PLAYING (LANDSCAPE) -->
+          <!-- NOW PLAYING (landscape) -->
           <div class="view" data-screen="now-land">
             <div class="npland">
               <div class="lstatus"><span>Living Room</span><span class="batt"><i></i></span></div>
-              <div class="art">
-                <svg viewBox="0 0 24 24"><path fill="#fff" d="M12 3v10.55A4 4 0 1014 17V7h4V3h-6z"/></svg>
-              </div>
+              <div class="art"><svg viewBox="0 0 24 24"><path fill="#fff" d="M12 3v10.55A4 4 0 1014 17V7h4V3h-6z"/></svg></div>
               <div class="side">
-                <div class="title">Midnight City</div>
-                <div class="artist">M83</div>
+                <div class="title" id="npTitleL">Midnight City</div>
+                <div class="artist" id="npArtistL">M83</div>
                 <div class="album">Hurry Up, We're Dreaming</div>
-                <div class="progress">
-                  <div class="bar"><i></i></div>
-                  <div class="times"><span>1:34</span><span>4:03</span></div>
-                </div>
+                <div class="progress"><div class="bar"><i></i></div><div class="times"><span>1:34</span><span>4:03</span></div></div>
                 <div class="transport">
                   <span class="iconbtn"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M6 6h2v12H6zM9 12l10 6V6z"/></svg></span>
-                  <span class="playbtn"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
+                  <span class="playbtn" data-toggleplay><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
                   <span class="iconbtn"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM5 18l10-6L5 6z"/></svg></span>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- BROWSE -->
+          <!-- LIBRARY (browse, with tabs) -->
           <div class="view" data-screen="browse">
-            <div class="statusbar"><span id="clk2">9:41</span><span class="right"><span class="batt"><i></i></span></span></div>
-            <div class="hdr"><span class="back">‹</span> Albums</div>
-            <div class="list">
-              <div class="row"><div class="thumb a"></div><div class="meta"><div class="t">Hurry Up, We're Dreaming</div><div class="s">M83 · 2011</div></div></div>
-              <div class="row"><div class="thumb b"></div><div class="meta"><div class="t">In Rainbows</div><div class="s">Radiohead · 2007</div></div></div>
-              <div class="row"><div class="thumb c"></div><div class="meta"><div class="t">Random Access Memories</div><div class="s">Daft Punk · 2013</div></div></div>
-              <div class="row"><div class="thumb a"></div><div class="meta"><div class="t">Discovery</div><div class="s">Daft Punk · 2001</div></div></div>
-              <div class="row"><div class="thumb b"></div><div class="meta"><div class="t">A Moon Shaped Pool</div><div class="s">Radiohead · 2016</div></div></div>
-              <div class="row"><div class="thumb c"></div><div class="meta"><div class="t">Currents</div><div class="s">Tame Impala · 2015</div></div></div>
-              <div class="row"><div class="thumb a"></div><div class="meta"><div class="t">Settle</div><div class="s">Disclosure · 2013</div></div></div>
-            </div>
-            <div class="tabbar">
-              <div class="tab">Artists</div><div class="tab active">Albums</div><div class="tab">Playlists</div><div class="tab">Search</div>
+            <div class="statusbar"><span class="chev" data-jump="now">‹ Now Playing</span><span class="right"><span class="batt"><i></i></span></span></div>
+            <div class="list" id="browseList"></div>
+            <div class="mini" data-jump="now"><div class="mt2"></div><div class="mm"><div class="t" id="miniT1">Midnight City</div><div class="s" id="miniS1">M83</div></div><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+            <div class="tabbar" id="tabbar">
+              <div class="tab" data-tab="artists">Artists</div>
+              <div class="tab active" data-tab="albums">Albums</div>
+              <div class="tab" data-tab="playlists">Playlists</div>
+              <div class="tab" data-tab="queue">Queue</div>
             </div>
           </div>
 
-          <!-- SEARCH -->
-          <div class="view" data-screen="search">
-            <div class="statusbar"><span>9:41</span><span class="right"><span class="batt"><i></i></span></span></div>
-            <div class="hdr">Search</div>
-            <div class="searchbox">daft pu|</div>
-            <div class="list">
-              <div class="row"><div class="thumb b"></div><div class="meta"><div class="t">Daft Punk</div><div class="s">Artist</div></div></div>
-              <div class="row"><div class="thumb c"></div><div class="meta"><div class="t">Random Access Memories</div><div class="s">Album · Daft Punk</div></div></div>
-              <div class="row"><div class="thumb a"></div><div class="meta"><div class="t">Get Lucky</div><div class="s">Track · Daft Punk</div></div></div>
-            </div>
-            <div class="kbd">
-              <div class="krow"><span class="key">q</span><span class="key">w</span><span class="key">e</span><span class="key">r</span><span class="key">t</span><span class="key">y</span><span class="key">u</span><span class="key">i</span><span class="key">o</span><span class="key">p</span></div>
-              <div class="krow"><span class="key">a</span><span class="key">s</span><span class="key">d</span><span class="key">f</span><span class="key">g</span><span class="key">h</span><span class="key">j</span><span class="key">k</span><span class="key">l</span></div>
-              <div class="krow"><span class="key">⇧</span><span class="key">z</span><span class="key">x</span><span class="key">c</span><span class="key">v</span><span class="key">b</span><span class="key">n</span><span class="key">m</span><span class="key">⌫</span></div>
-              <div class="krow"><span class="key" style="max-width:none;flex:3">space</span><span class="key" style="max-width:46px">↵</span></div>
-            </div>
+          <!-- ALBUM (drill-down track list) -->
+          <div class="view" data-screen="album">
+            <div class="hdr"><span class="back" data-back>‹</span><span id="albumTitle">Album</span></div>
+            <div class="list" id="albumList"></div>
+            <div class="mini" data-jump="now"><div class="mt2"></div><div class="mm"><div class="t" id="miniT2">Midnight City</div><div class="s" id="miniS2">M83</div></div><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+          </div>
+
+          <!-- QUEUE -->
+          <div class="view" data-screen="queue">
+            <div class="hdr"><span class="back" data-jump="now">‹</span><span>Up Next</span></div>
+            <div class="list" id="queueList"></div>
           </div>
 
           <!-- LOCK -->
           <div class="view lock" data-screen="lock">
-            <div class="statusbar" style="position:absolute;top:0;left:0;right:0"><span>9:41</span><span class="right"><span class="batt"><i></i></span></span></div>
+            <div class="statusbar" style="position:absolute;top:0;left:0;right:0"><span id="lockTime2">9:41</span><span class="right"><span class="batt"><i></i></span></span></div>
             <div class="clock" id="lockClock">9:41</div>
-            <div class="mini">Midnight City · M83</div>
-            <div class="holdring">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="#9a9aa0"><path d="M12 17a2 2 0 002-2 2 2 0 00-2-2 2 2 0 00-2 2 2 2 0 002 2m6-9a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V10a2 2 0 012-2h1V6a5 5 0 0110 0v2h1M12 3a3 3 0 00-3 3v2h6V6a3 3 0 00-3-3z"/></svg>
-            </div>
+            <div class="submini" id="lockNow">Midnight City · M83</div>
+            <div class="holdring" id="holdring"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M12 17a2 2 0 002-2 2 2 0 00-2-2 2 2 0 00-2 2 2 2 0 002 2m6-9a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V10a2 2 0 012-2h1V6a5 5 0 0110 0v2h1M12 3a3 3 0 00-3 3v2h6V6a3 3 0 00-3-3z"/></svg></div>
             <div class="hint">hold to unlock · lift to wake</div>
           </div>
 
@@ -293,72 +240,131 @@
 </div>
 
 <script>
-  const DISPLAY_PPI = 307.5;     // 587.3 px diagonal / 1.91"
-  const MONITOR_PPI = 225;       // 2560x1600 over ~13.44" (WMI: 29x18 cm)
-  const wrap = document.getElementById('deviceWrap');
-  document.getElementById('dpr').textContent = (window.devicePixelRatio||1).toFixed(2);
+  const DISPLAY_PPI=307.5, MONITOR_PPI=225;
+  const wrap=document.getElementById('deviceWrap');
 
-  let view = '2', calib = 1.0;
-  function applyView(){
-    let scale;
-    if(view==='phys'){
-      const dpr = window.devicePixelRatio || 1;
-      scale = (MONITOR_PPI/DISPLAY_PPI)/dpr * calib;   // physical 1:1
-    } else {
-      scale = parseFloat(view);                        // 1x / 2x design
-    }
-    wrap.style.transform = 'scale('+scale+')';
+  /* ---- sample data ---- */
+  const albums=[
+    {t:"Hurry Up, We're Dreaming",a:"M83",y:2011,c:'a'},
+    {t:"In Rainbows",a:"Radiohead",y:2007,c:'b'},
+    {t:"Random Access Memories",a:"Daft Punk",y:2013,c:'c'},
+    {t:"Discovery",a:"Daft Punk",y:2001,c:'a'},
+    {t:"A Moon Shaped Pool",a:"Radiohead",y:2016,c:'b'},
+    {t:"Currents",a:"Tame Impala",y:2015,c:'c'},
+    {t:"Settle",a:"Disclosure",y:2013,c:'a'},
+  ];
+  const artists=["M83","Radiohead","Daft Punk","Tame Impala","Disclosure","Bonobo","ODESZA"];
+  const playlists=["Late Night","Focus Flow","Workout","Discover Weekly","Chill Vibes","Road Trip"];
+  const queue=[
+    {t:"Midnight City",a:"M83"},{t:"Reunion",a:"M83"},{t:"Wait",a:"M83"},
+    {t:"Nightcall",a:"Kavinsky"},{t:"Instant Crush",a:"Daft Punk"},{t:"Less I Know The Better",a:"Tame Impala"},
+  ];
+  const albumTracks=["Intro","Midnight City","Reunion","Wait","Raconte-Moi Une Histoire","Train to Pluton","Claudia Lewis"];
+
+  function row(html,attrs){ return '<div class="row" '+(attrs||'')+'>'+html+'</div>'; }
+  function renderBrowse(){
+    const el=document.getElementById('browseList'); let h='';
+    if(browseTab==='albums') albums.forEach(al=>{ h+=row('<div class="thumb '+al.c+'"></div><div class="meta"><div class="t">'+al.t+'</div><div class="s">'+al.a+' · '+al.y+'</div></div>','data-album="'+al.t+'" data-artist="'+al.a+'" data-go="album"'); });
+    else if(browseTab==='artists') artists.forEach(a=>{ h+=row('<div class="thumb b"></div><div class="meta"><div class="t">'+a+'</div><div class="s">Artist</div></div>','data-album="'+a+'" data-artist="'+a+'" data-go="album"'); });
+    else if(browseTab==='playlists') playlists.forEach(p=>{ h+=row('<div class="thumb c"></div><div class="meta"><div class="t">'+p+'</div><div class="s">Playlist</div></div>','data-album="'+p+'" data-artist="Various" data-go="album"'); });
+    else if(browseTab==='queue'){ el.innerHTML=''; go('queue'); return; }
+    el.innerHTML=h;
   }
-  function applyRuler(){
-    // a 50 mm reference at the monitor's true density (accounting for dpr)
-    const dpr = window.devicePixelRatio || 1;
-    const cssPxPerMM = (MONITOR_PPI/25.4)/dpr * calib;
-    document.getElementById('ruler').style.width = (50*cssPxPerMM)+'px';
+  function renderAlbum(title,artist){
+    document.getElementById('albumTitle').textContent=title;
+    let h=''; albumTracks.forEach((t,i)=>{ h+=row('<div class="num">'+(i+1)+'</div><div class="meta"><div class="t">'+t+'</div><div class="s">'+artist+'</div></div>','data-track="'+t+'" data-artist="'+artist+'" data-play'); });
+    document.getElementById('albumList').innerHTML=h;
+  }
+  function renderQueue(){
+    let h=''; queue.forEach((q,i)=>{ h+=row('<div class="num">'+(i===0?'▶':i+1)+'</div><div class="meta"><div class="t">'+q.t+'</div><div class="s">'+q.a+'</div></div>',(i===0?'class-playing ':'')+'data-track="'+q.t+'" data-artist="'+q.a+'" data-play'); });
+    const el=document.getElementById('queueList'); el.innerHTML=h;
+    el.querySelectorAll('.row')[0]?.classList.add('playing');
   }
 
-  // screen + orientation switching
-  let activeScreen='now', orient='port';
+  /* ---- navigation ---- */
+  let stack=['now'], orient='port', browseTab='albums', playing=true;
+  function go(name){ if(stack[stack.length-1]!==name) stack.push(name); render(); }
+  function back(){ if(stack.length>1) stack.pop(); render(); }
+  function jump(name){ stack=[name==='queue'?'browse':'now']; if(name==='queue'){browseTab='queue';go('queue');return;} if(name!=='now')stack=[name]; render(); }
+  function setNow(t,a){ playing=true;
+    ['npTitle','npTitleL'].forEach(id=>document.getElementById(id).textContent=t);
+    ['npArtist','npArtistL'].forEach(id=>document.getElementById(id).textContent=a);
+    ['miniT1','miniT2'].forEach(id=>document.getElementById(id).textContent=t);
+    ['miniS1','miniS2'].forEach(id=>document.getElementById(id).textContent=a);
+    document.getElementById('lockNow').textContent=t+' · '+a;
+    updatePlayIcon();
+  }
+  function updatePlayIcon(){ document.getElementById('ppIcon').innerHTML = playing? '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>'; }
   function render(){
-    const scr=document.getElementById('screen');
-    scr.classList.toggle('land', orient==='land');
-    const target = (orient==='land') ? 'now-land' : activeScreen;  // landscape demo = now-playing
-    document.querySelectorAll('.screen .view').forEach(v=>v.classList.toggle('show', v.dataset.screen===target));
+    const top = orient==='land' ? 'now-land' : stack[stack.length-1];
+    document.getElementById('screen').classList.toggle('land', orient==='land');
+    document.querySelectorAll('.screen .view').forEach(v=>v.classList.toggle('show', v.dataset.screen===top));
+    // panel highlight
+    const map={now:'now','now-land':'now',browse:'browse',album:'browse',queue:'queue',lock:'lock'};
+    document.querySelectorAll('#screenBtns button').forEach(b=>b.classList.toggle('active', b.dataset.jump===map[top]));
   }
-  document.querySelectorAll('#screenBtns button').forEach(b=>{
-    b.onclick=()=>{
-      document.querySelectorAll('#screenBtns button').forEach(x=>x.classList.remove('active'));
-      b.classList.add('active');
-      activeScreen=b.dataset.screen; render();
-    };
-  });
-  document.querySelectorAll('#orientBtns button').forEach(b=>{
-    b.onclick=()=>{
-      document.querySelectorAll('#orientBtns button').forEach(x=>x.classList.remove('active'));
-      b.classList.add('active');
-      orient=b.dataset.orient; render();
-    };
-  });
-  // view switching
-  document.querySelectorAll('#viewBtns button').forEach(b=>{
-    b.onclick=()=>{
-      document.querySelectorAll('#viewBtns button').forEach(x=>x.classList.remove('active'));
-      b.classList.add('active');
-      view=b.dataset.view; applyView();
-    };
-  });
-  // calibration
-  const cal=document.getElementById('cal');
-  cal.oninput=()=>{ calib=parseFloat(cal.value); document.getElementById('calVal').textContent=calib.toFixed(2); applyView(); applyRuler(); };
 
-  // live clock
-  function tick(){
-    const d=new Date(); let h=d.getHours(), m=d.getMinutes().toString().padStart(2,'0');
-    const t=h+':'+m;
-    ['clk1','clk2','lockClock'].forEach(id=>{const e=document.getElementById(id); if(e)e.textContent=t;});
+  /* ---- tap handling (delegated) ---- */
+  document.getElementById('screen').addEventListener('click',e=>{
+    if(swiped){ swiped=false; return; }   // a swipe, not a tap
+    const go_=e.target.closest('[data-go]'); const back_=e.target.closest('[data-back]');
+    const jump_=e.target.closest('[data-jump]'); const play_=e.target.closest('[data-play]');
+    const tab_=e.target.closest('[data-tab]'); const tp_=e.target.closest('[data-toggleplay]');
+    if(tp_){ playing=!playing; updatePlayIcon(); return; }
+    if(tab_){ browseTab=tab_.dataset.tab; document.querySelectorAll('#tabbar .tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===browseTab)); renderBrowse(); return; }
+    if(play_){ setNow(play_.dataset.track, play_.dataset.artist); stack=['now']; render(); return; }
+    if(go_){ const n=go_.dataset.go; if(n==='album'){ renderAlbum(go_.dataset.album,go_.dataset.artist);} if(n==='browse'){renderBrowse();} go(n); return; }
+    if(back_){ back(); return; }
+    if(jump_){ jump(jump_.dataset.jump); return; }
+  });
+
+  /* ---- swipe navigation (works with touch or mouse-drag) ----
+     up = forward (Now Playing -> Library);  down = back (-> Now Playing)
+     horizontal on Library = switch tabs;  swipe right elsewhere = back */
+  let sx=0, sy=0, swiped=false;
+  const SWIPE_TABS=['artists','albums','playlists'];
+  function switchTab(dir){
+    let i=SWIPE_TABS.indexOf(browseTab); if(i<0)i=1;
+    i=(i+dir+SWIPE_TABS.length)%SWIPE_TABS.length; browseTab=SWIPE_TABS[i];
+    document.querySelectorAll('#tabbar .tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===browseTab));
+    renderBrowse();
   }
+  const scr=document.getElementById('screen');
+  scr.addEventListener('pointerdown',e=>{ sx=e.clientX; sy=e.clientY; swiped=false; });
+  scr.addEventListener('pointerup',e=>{
+    const dx=e.clientX-sx, dy=e.clientY-sy;
+    if(Math.hypot(dx,dy)<22) return;       // too small = tap
+    swiped=true;
+    const top=stack[stack.length-1];
+    if(Math.abs(dx)>Math.abs(dy)){         // horizontal
+      if(top==='browse') switchTab(dx<0?1:-1);
+      else if(dx>0) back();                // swipe right = back
+    } else {                               // vertical
+      if(dy<0){ if(top==='now'){ renderBrowse(); go('browse'); } }      // up = into Library
+      else { if(top!=='now'&&top!=='lock'){ jump('now'); } }            // down = back to Now Playing
+    }
+  });
+
+  /* hold-to-unlock */
+  const ring=document.getElementById('holdring'); let ht;
+  function holdStart(){ ring.classList.add('holding'); ht=setTimeout(()=>{ ring.classList.remove('holding'); jump('now'); },800); }
+  function holdEnd(){ ring.classList.remove('holding'); clearTimeout(ht); }
+  ring.addEventListener('pointerdown',holdStart); ring.addEventListener('pointerup',holdEnd); ring.addEventListener('pointerleave',holdEnd);
+
+  /* ---- panel controls ---- */
+  document.querySelectorAll('#screenBtns button').forEach(b=>b.onclick=()=>{ if(b.dataset.jump==='browse')renderBrowse(); jump(b.dataset.jump); });
+  document.querySelectorAll('#orientBtns button').forEach(b=>b.onclick=()=>{ document.querySelectorAll('#orientBtns button').forEach(x=>x.classList.remove('active')); b.classList.add('active'); orient=b.dataset.orient; render(); });
+  document.querySelectorAll('#viewBtns button').forEach(b=>b.onclick=()=>{ document.querySelectorAll('#viewBtns button').forEach(x=>x.classList.remove('active')); b.classList.add('active'); viewMode=b.dataset.view; applyView(); });
+
+  let viewMode='2', calib=1.0;
+  function applyView(){ let s; if(viewMode==='phys'){const dpr=window.devicePixelRatio||1; s=(MONITOR_PPI/DISPLAY_PPI)/dpr*calib;} else s=parseFloat(viewMode); wrap.style.transform='scale('+s+')'; }
+  function applyRuler(){ const dpr=window.devicePixelRatio||1; const px=(MONITOR_PPI/25.4)/dpr*calib; document.getElementById('ruler').style.width=(50*px)+'px'; }
+  const cal=document.getElementById('cal'); cal.oninput=()=>{ calib=parseFloat(cal.value); document.getElementById('calVal').textContent=calib.toFixed(2); applyView(); applyRuler(); };
+
+  function tick(){ const d=new Date(),h=d.getHours(),m=d.getMinutes().toString().padStart(2,'0'),t=h+':'+m; ['lockClock','lockTime2'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=t;}); }
   setInterval(tick,10000); tick();
 
-  applyView(); applyRuler(); render();
+  renderBrowse(); renderQueue(); applyView(); applyRuler(); render();
 </script>
 </body>
 </html>
