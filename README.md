@@ -86,9 +86,18 @@ mounts as a clean shield with plenty of headroom (I²S ×3, ADC remote-sense, ha
 fuel gauge, power button). Onboard: ESP32-S3R8 (8 MB PSRAM, 16 MB flash), QMI8658 IMU, USB-C, and
 an MX1.25 LiPo charge/discharge header. The tall-narrow shape suits both a vertical now-playing
 layout and scrolling library lists.
-⚠️ **Order the *touch* variant** (it also ships non-touch). With 8 MB **octal** PSRAM, GPIO35/36/37
-are reserved for PSRAM — route I²S to other exposed pins via the GPIO matrix. *(Earlier candidate:
-ESP32-S3-Touch-AMOLED-1.8 (368×448, only 7 GPIO) — now a fallback.)*
+⚠️ **Order the *touch* variant, ideally with headers** (the "-M" pre-soldered-header version) so the
+carrier shield mates directly. With 8 MB **octal** PSRAM, GPIO35/36/37 are reserved for PSRAM —
+route I²S to other exposed pins via the GPIO matrix. *(Earlier candidate: ESP32-S3-Touch-AMOLED-1.8
+(368×448, only 7 GPIO) — now a fallback.)*
+
+Key spec details (for firmware + enclosure):
+- Display driver **RM67162** (QSPI), touch **FT3168** (I²C), IMU **QMI8658** (I²C) — the ICs our
+  LVGL/touch/motion bring-up targets.
+- 240×536, 350 cd/m², 65K color. SoC ESP32-S3R8 (240 MHz, 16 MB flash / 8 MB octal PSRAM).
+- **Ceramic chip antenna + u.FL connector** — the u.FL lets us run an external antenna inside a
+  **metal (CNC) enclosure**, which would otherwise block the chip antenna.
+- Touch board size **59.6 × 28.5 mm**; MX1.25 LiPo header; microSD slot; USB-C.
 
 **PCB design-for-manufacture:** hand-solderable (larger SMD, no fine-pitch QFN) so DIYers can
 build, *plus* a JLCPCB-Assembly BOM/CPL for pre-assembled / Tindie batches. Prefer LCSC "Basic"
