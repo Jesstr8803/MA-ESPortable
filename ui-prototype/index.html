@@ -53,27 +53,34 @@
 
   /* now playing */
   .np{padding:0 16px;flex:1;}
-  .art{width:208px;height:208px;margin:6px auto 0;border-radius:12px;background:linear-gradient(135deg,#3a2b6e,#b14a8a 55%,#e8743b);box-shadow:0 8px 24px rgba(177,74,138,.35);display:flex;align-items:center;justify-content:center;}
+  .art{width:160px;height:160px;margin:4px auto 0;border-radius:12px;background:linear-gradient(135deg,#3a2b6e,#b14a8a 55%,#e8743b);box-shadow:0 8px 24px rgba(177,74,138,.35);display:flex;align-items:center;justify-content:center;}
   .art svg{width:54px;height:54px;opacity:.85;}
-  .track{margin-top:16px;text-align:center;}
-  .track .title{font-size:21px;font-weight:700;line-height:1.2;} .track .title>span{max-width:100%;}
-  .track .artist{font-size:16px;color:var(--dim);margin-top:4px;}
-  .track .album{font-size:13px;color:var(--dim2);margin-top:2px;}
-  .progress{margin-top:14px;} .bar{height:4px;background:#2a2a30;border-radius:2px;overflow:hidden;} .bar i{display:block;height:100%;width:38%;background:var(--accent);border-radius:2px;}
+  .track{margin-top:10px;text-align:center;}
+  .track .title{font-size:23px;font-weight:700;line-height:1.2;} .track .title>span{max-width:100%;}
+  .track .artist{font-size:18px;color:#fff;margin-top:5px;}
+  .track .album{font-size:14px;color:#b9b9c1;margin-top:3px;}
+  .progress{margin-top:10px;} .bar{height:4px;background:#2a2a30;border-radius:2px;overflow:hidden;} .bar i{display:block;height:100%;width:38%;background:var(--accent);border-radius:2px;}
   .times{display:flex;justify-content:space-between;font-size:11px;color:var(--dim2);margin-top:5px;}
-  .transport{display:flex;align-items:center;justify-content:space-around;margin-top:18px;padding:0 4px;}
+  .transport{display:flex;align-items:center;justify-content:space-around;margin-top:12px;padding:0 4px;}
   .transport .iconbtn svg{fill:var(--fg);cursor:pointer;width:34px;height:34px;}
   .iconbtn{display:flex;align-items:center;justify-content:center;width:60px;height:60px;}
   .playbtn{width:80px;height:80px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;}
   .playbtn svg{fill:#000;width:32px;height:32px;}
-  .secondary{display:flex;justify-content:center;gap:46px;margin-top:14px;color:var(--dim);}
-  .secondary svg{width:26px;height:26px;fill:var(--dim);cursor:pointer;} .secondary svg.on{fill:var(--accent);}
+  .secondary{display:flex;justify-content:center;gap:46px;margin-top:10px;color:var(--dim);}
+  .secondary svg{width:28px;height:28px;fill:#b9b9c1;cursor:pointer;} .secondary svg.on{fill:var(--accent);}
+  /* on-screen volume slider (tall hit zone for fingers) */
+  .volrow{display:flex;align-items:center;gap:10px;margin-top:10px;padding:0 8px;}
+  .volrow>svg{width:18px;height:18px;fill:var(--dim);flex:none;}
+  .vslider{flex:1;height:32px;display:flex;align-items:center;cursor:pointer;touch-action:none;}
+  .vtrack{width:100%;height:8px;background:#2a2a30;border-radius:4px;}
+  .vfill{display:block;height:100%;background:var(--accent);border-radius:4px;}
+  .npland .volrow{margin-top:12px;padding:0;}
 
   /* now playing landscape */
   .npland{display:flex;height:100%;padding:16px;gap:16px;align-items:center;position:relative;}
   .npland .art{width:200px;height:200px;margin:0;flex:none;} .npland .art svg{width:48px;height:48px;}
   .npland .side{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;}
-  .npland .title{font-size:22px;font-weight:700;} .npland .artist{font-size:15px;color:var(--dim);margin-top:4px;} .npland .album{font-size:12px;color:var(--dim2);margin-top:2px;}
+  .npland .title{font-size:23px;font-weight:700;} .npland .artist{font-size:17px;color:#fff;margin-top:4px;} .npland .album{font-size:13px;color:#b9b9c1;margin-top:2px;}
   .npland .progress{margin-top:16px;} .npland .transport{margin-top:16px;padding:0;justify-content:flex-start;gap:18px;}
   .npland .playbtn{width:56px;height:56px;} .npland .playbtn svg{width:22px;height:22px;}
   .npland .lstatus{position:absolute;top:8px;right:14px;font-size:12px;color:var(--dim);display:flex;align-items:center;gap:6px;}
@@ -111,6 +118,35 @@
   .holdring{width:60px;height:60px;border-radius:50%;border:3px solid var(--dim2);margin:24px auto 0;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .8s linear,transform .1s;}
   .holdring.holding{border-color:var(--accent);transform:scale(1.05);} .holdring svg{fill:var(--dim);}
 
+  /* spinner + centered state screens (boot / connecting) */
+  .spinner{width:42px;height:42px;border-radius:50%;border:3px solid #2a2a30;border-top-color:var(--accent);animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .state{align-items:center;justify-content:center;text-align:center;}
+  .state .logo{font-size:24px;font-weight:800;letter-spacing:.4px;} .state .logo span{color:var(--accent);}
+  .state .msg{margin-top:20px;font-size:15px;color:var(--dim);line-height:1.35;}
+  .state .sub{margin-top:8px;font-size:11px;color:var(--dim2);}
+  .state .ver{position:absolute;bottom:20px;left:0;right:0;font-size:11px;color:var(--dim2);}
+
+  /* charging */
+  .chg .bglyph{width:80px;height:144px;border:3px solid #3a3a42;border-radius:12px;position:relative;margin:0 auto;}
+  .chg .bglyph::before{content:"";position:absolute;top:-9px;left:50%;transform:translateX(-50%);width:30px;height:7px;background:#3a3a42;border-radius:3px 3px 0 0;}
+  .chg .bglyph i{position:absolute;left:6px;right:6px;bottom:6px;height:66%;background:#5ad27a;border-radius:7px;}
+  .chg .bolt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;}
+  .chg .pct{font-size:32px;font-weight:300;margin-top:20px;} .chg .lbl2{font-size:13px;color:#5ad27a;margin-top:2px;}
+
+  /* settings */
+  .set .srow{display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid #15151a;min-height:62px;cursor:pointer;}
+  .set .srow .sl{font-size:15px;} .set .srow .sv{font-size:13px;color:var(--dim);display:flex;align-items:center;gap:6px;}
+  .set .srow.act .sv::after{content:"›";color:var(--dim2);font-size:18px;}
+  .set .srow.disp{cursor:default;} .set .srow.disp .sv{color:var(--dim2);}
+  .set .sechdr{padding:16px 16px 6px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim2);}
+  .set .step{display:flex;align-items:center;gap:10px;} .set .step b{min-width:46px;text-align:center;color:var(--fg);font-weight:400;}
+  .set .stepbtn{width:30px;height:30px;border-radius:8px;background:#26262c;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--fg);}
+  .setbtn{margin:16px;padding:15px;border-radius:12px;background:#16161b;color:var(--accent);text-align:center;font-weight:600;font-size:14px;cursor:pointer;border:1px solid #2a2a30;line-height:1.3;}
+  .tog{width:44px;height:25px;border-radius:13px;background:#2a2a30;position:relative;flex:none;}
+  .tog.on{background:var(--accent);} .tog i{position:absolute;top:2px;left:2px;width:21px;height:21px;border-radius:50%;background:#fff;transition:left .15s;} .tog.on i{left:21px;}
+  .gear{cursor:pointer;fill:var(--dim);}
+
   /* fingertip puck (~9 mm = 109 px) */
   .finger{position:absolute;width:109px;height:109px;border-radius:50%;background:rgba(90,200,250,.22);border:2px solid rgba(90,200,250,.85);transform:translate(-50%,-50%);pointer-events:none;display:none;z-index:60;align-items:center;justify-content:center;font-size:11px;color:#bfeaff;}
 </style>
@@ -128,6 +164,14 @@
       <button data-jump="library">Library</button>
       <button data-jump="queue">Queue</button>
       <button data-jump="lock">Lock</button>
+    </div>
+
+    <h2>States &amp; overlays</h2>
+    <div class="btnrow" id="stateBtns">
+      <button data-jump="boot">Boot</button>
+      <button data-jump="connecting">Connecting</button>
+      <button data-jump="charging">Charging</button>
+      <button data-jump="settings">Settings</button>
     </div>
 
     <h2>Orientation</h2>
@@ -177,10 +221,15 @@
                 <span class="playbtn" data-toggleplay><svg id="ppIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
                 <span class="iconbtn"><svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM5 18l10-6L5 6z"/></svg></span>
               </div>
+              <div class="volrow">
+                <svg viewBox="0 0 24 24"><path d="M5 10v4h3l4 4V6L8 10H5z"/></svg>
+                <div class="vslider"><div class="vtrack"><i class="vfill" style="width:65%"></i></div></div>
+                <svg viewBox="0 0 24 24"><path d="M5 10v4h3l4 4V6L8 10H5zm9 2a4 4 0 00-2-3.46v6.92A4 4 0 0014 12z"/></svg>
+              </div>
               <div class="secondary">
-                <svg viewBox="0 0 24 24"><path d="M10.6 9.4 7.9 6.7 9.3 5.3 12 8l2.7-2.7 1.4 1.4L13.4 9.4M3 7l2 2H3m18 0h-2l2-2m-7 6 2.7 2.7-1.4 1.4L14 14.6l-2.7 2.7-1.4-1.4L12.6 13z"/></svg>
-                <svg class="on" viewBox="0 0 24 24"><path d="M9 3v2H5v3H3V3h6m12 0v5h-2V5h-4V3h6M3 16h2v3h4v2H3v-5m18 0v5h-6v-2h4v-3h2z"/></svg>
-                <svg data-jump="lock" viewBox="0 0 24 24"><path d="M12 17a2 2 0 002-2 2 2 0 00-2-2 2 2 0 00-2 2 2 2 0 002 2m6-9a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V10a2 2 0 012-2h1V6a5 5 0 0110 0v2h1M12 3a3 3 0 00-3 3v2h6V6a3 3 0 00-3-3z"/></svg>
+                <svg viewBox="0 0 24 24"><path d="M10.59 9.17 5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>
+                <svg class="on" viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>
+                <svg data-jump="lock" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
               </div>
             </div>
           </div>
@@ -200,13 +249,18 @@
                   <span class="playbtn" data-toggleplay><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
                   <span class="iconbtn"><svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM5 18l10-6L5 6z"/></svg></span>
                 </div>
+                <div class="volrow">
+                  <svg viewBox="0 0 24 24"><path d="M5 10v4h3l4 4V6L8 10H5z"/></svg>
+                  <div class="vslider"><div class="vtrack"><i class="vfill" style="width:65%"></i></div></div>
+                  <svg viewBox="0 0 24 24"><path d="M5 10v4h3l4 4V6L8 10H5zm9 2a4 4 0 00-2-3.46v6.92A4 4 0 0014 12z"/></svg>
+                </div>
               </div>
             </div>
           </div>
 
           <!-- LIBRARY (2x2 tiles) -->
           <div class="view" data-screen="library">
-            <div class="statusbar"><span class="chev" data-jump="now">‹ Now Playing</span><span class="right"><span class="batt"><i></i></span></span></div>
+            <div class="statusbar"><span class="chev" data-jump="now">‹ Now Playing</span><span class="right"><svg class="gear" data-jump="settings" width="18" height="18" viewBox="0 0 24 24"><path d="M12 8a4 4 0 100 8 4 4 0 000-8m9.4 4c0-.6 0-1.2-.1-1.8l2-1.5-2-3.4-2.3 1a7.6 7.6 0 00-3.1-1.8L15.5 1h-7l-.3 2.7a7.6 7.6 0 00-3.1 1.8l-2.3-1-2 3.4 2 1.5a7.4 7.4 0 000 3.6l-2 1.5 2 3.4 2.3-1a7.6 7.6 0 003.1 1.8l.3 2.7h7l.3-2.7a7.6 7.6 0 003.1-1.8l2.3 1 2-3.4-2-1.5c.1-.6.1-1.2.1-1.8z"/></svg><span class="batt"><i></i></span></span></div>
             <div class="libgrid">
               <div class="tile" data-go="list" data-cat="artists"><svg viewBox="0 0 24 24"><path d="M12 12a5 5 0 10-5-5 5 5 0 005 5m0 2c-3.3 0-10 1.7-10 5v3h20v-3c0-3.3-6.7-5-10-5z"/></svg><div class="lbl">Artists</div></div>
               <div class="tile" data-go="list" data-cat="albums"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1010 10A10 10 0 0012 2m0 13a3 3 0 113-3 3 3 0 01-3 3m0-4a1 1 0 101 1 1 1 0 00-1-1z"/></svg><div class="lbl">Albums</div></div>
@@ -233,6 +287,58 @@
           <div class="view" data-screen="queue">
             <div class="hdr"><span class="back" data-jump="library">‹</span><span>Up Next</span></div>
             <div class="list" id="queueList"></div>
+          </div>
+
+          <!-- BOOT SPLASH -->
+          <div class="view state" data-screen="boot">
+            <div class="logo">MA<span>·</span>ESPortable</div>
+            <div class="spinner" style="margin-top:28px"></div>
+            <div class="ver">v0.1.0</div>
+          </div>
+
+          <!-- CONNECTING TO MA -->
+          <div class="view state" data-screen="connecting">
+            <div class="spinner"></div>
+            <div class="msg">Connecting to<br>Music Assistant…</div>
+            <div class="sub">192.168.86.37 · Wi-Fi ▂▄▆</div>
+          </div>
+
+          <!-- CHARGING -->
+          <div class="view state chg" data-screen="charging">
+            <div class="bglyph"><i></i><div class="bolt"><svg width="34" height="34" viewBox="0 0 24 24" fill="#0b3a1c"><path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z"/></svg></div></div>
+            <div class="pct">72%</div>
+            <div class="lbl2">Charging</div>
+          </div>
+
+          <!-- SETTINGS -->
+          <div class="view set" data-screen="settings">
+            <div class="hdr"><span class="back" data-jump="library">‹</span><span>Settings</span></div>
+            <div class="list">
+              <div class="sechdr">On device</div>
+              <div class="srow"><span class="sl">Brightness</span><span class="sv">80%</span></div>
+              <div class="srow"><span class="sl">Sleep timeout</span><span class="sv">30 s</span></div>
+              <div class="srow"><span class="sl">Audio sync delay</span><span class="sv"><span class="step"><span class="stepbtn">−</span><b>0 ms</b><span class="stepbtn">+</span></span></span></div>
+              <div class="srow toggle"><span class="sl">Haptics</span><span class="sv"><span class="tog on" data-tog><i></i></span></span></div>
+              <div class="srow act"><span class="sl">Calibrate remote</span><span class="sv"></span></div>
+              <div class="sechdr">Status</div>
+              <div class="srow disp"><span class="sl">Device name</span><span class="sv">MA Portable</span></div>
+              <div class="srow disp"><span class="sl">Wi-Fi</span><span class="sv">HomeNet</span></div>
+              <div class="srow disp"><span class="sl">Music Assistant</span><span class="sv">Connected</span></div>
+              <div class="srow disp"><span class="sl">Firmware</span><span class="sv">v0.1.0</span></div>
+              <div class="sechdr">Configuration</div>
+              <div class="srow disp"><span class="sl">Settings page</span><span class="sv">ma-esportable.local</span></div>
+              <div class="setbtn" data-jump="apmode">⚙ Change Wi-Fi network<br><span style="font-size:11px;color:var(--dim);font-weight:400">reboots to a setup hotspot</span></div>
+            </div>
+          </div>
+
+          <!-- AP / SETUP MODE -->
+          <div class="view state" data-screen="apmode">
+            <div class="logo" style="font-size:20px">Setup Mode</div>
+            <div class="msg">Join this Wi-Fi on your phone:<br><b style="color:#fff">MA-ESPortable-A1B2</b></div>
+            <div class="sub">then open <b style="color:#cfd2d8">http://192.168.4.1</b> in a browser</div>
+            <div class="spinner" style="margin-top:22px;width:30px;height:30px"></div>
+            <div class="sub" style="margin-top:14px">waiting for setup…</div>
+            <div class="ver"><span data-jump="settings" style="cursor:pointer">‹ cancel &amp; reboot</span></div>
           </div>
 
           <!-- LOCK -->
@@ -306,13 +412,14 @@
     const top=orient==='land'?'now-land':stack[stack.length-1];
     scr.classList.toggle('land',orient==='land');
     scr.querySelectorAll('.view').forEach(v=>v.classList.toggle('show',v.dataset.screen===top));
-    const map={now:'now','now-land':'now',library:'library',list:'library',album:'library',queue:'queue',lock:'lock'};
-    document.querySelectorAll('#screenBtns button').forEach(b=>b.classList.toggle('active',b.dataset.jump===map[top]));
+    const map={now:'now','now-land':'now',library:'library',list:'library',album:'library',queue:'queue',lock:'lock',settings:'settings',apmode:'settings',boot:'boot',connecting:'connecting',charging:'charging'};
+    document.querySelectorAll('#screenBtns button, #stateBtns button').forEach(b=>b.classList.toggle('active',b.dataset.jump===map[top]));
     applyMarquee();
   }
 
   scr.addEventListener('click',e=>{
     if(swiped){ swiped=false; return; }
+    const tog_=e.target.closest('[data-tog]'); if(tog_){ tog_.classList.toggle('on'); return; }
     const go_=e.target.closest('[data-go]'),back_=e.target.closest('[data-back]'),jump_=e.target.closest('[data-jump]'),play_=e.target.closest('[data-play]'),tp_=e.target.closest('[data-toggleplay]');
     if(tp_){ playing=!playing; updatePlay(); return; }
     if(play_){ setNow(play_.dataset.track,play_.dataset.artist); stack=['now']; render(); return; }
@@ -321,10 +428,19 @@
     if(jump_){ const n=jump_.dataset.jump; if(n==='queue') renderQueue(); jump(n); return; }
   });
 
+  /* volume slider (on-screen, for headphones without inline controls) */
+  let vDragging=false, vEl=null;
+  function setVol(s,clientX){ const r=s.getBoundingClientRect(); let p=(clientX-r.left)/r.width; p=Math.max(0,Math.min(1,p));
+    document.querySelectorAll('.vfill').forEach(f=>f.style.width=Math.round(p*100)+'%'); }
+
   /* swipe nav */
-  let sx=0,sy=0,swiped=false;
-  scr.addEventListener('pointerdown',e=>{ sx=e.clientX; sy=e.clientY; swiped=false; });
+  let sx=0,sy=0,swiped=false,startedOnVol=false;
+  scr.addEventListener('pointerdown',e=>{ sx=e.clientX; sy=e.clientY; swiped=false;
+    const s=e.target.closest('.vslider'); startedOnVol=!!s; if(s){ vDragging=true; vEl=s; setVol(s,e.clientX); } });
+  scr.addEventListener('pointermove',e=>{ if(vDragging&&vEl) setVol(vEl,e.clientX); });
+  window.addEventListener('pointerup',()=>{ vDragging=false; vEl=null; });
   scr.addEventListener('pointerup',e=>{
+    if(startedOnVol){ startedOnVol=false; return; }   // adjusting volume, not swiping
     const dx=e.clientX-sx, dy=e.clientY-sy; if(Math.hypot(dx,dy)<22) return; swiped=true;
     const top=stack[stack.length-1];
     if(Math.abs(dx)>Math.abs(dy)){ if(dx>0 && top!=='now') back(); }
@@ -339,7 +455,7 @@
   ring.addEventListener('pointerup',endHold); ring.addEventListener('pointerleave',endHold);
 
   /* panel */
-  document.querySelectorAll('#screenBtns button').forEach(b=>b.onclick=()=>{ const n=b.dataset.jump; if(n==='queue')renderQueue(); jump(n); });
+  document.querySelectorAll('#screenBtns button, #stateBtns button').forEach(b=>{ if(!b.dataset.jump)return; b.onclick=()=>{ const n=b.dataset.jump; if(n==='queue')renderQueue(); jump(n); }; });
   document.querySelectorAll('#orientBtns button').forEach(b=>b.onclick=()=>{ document.querySelectorAll('#orientBtns button').forEach(x=>x.classList.remove('active')); b.classList.add('active'); orient=b.dataset.orient; render(); });
   document.querySelectorAll('#viewBtns button').forEach(b=>b.onclick=()=>{ document.querySelectorAll('#viewBtns button').forEach(x=>x.classList.remove('active')); b.classList.add('active'); viewMode=b.dataset.view; applyView(); });
 

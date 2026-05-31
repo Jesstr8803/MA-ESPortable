@@ -197,6 +197,24 @@ The panel is tiny — **19.8 × 44.3 mm** (smaller than a stick of gum). The UI 
   runtime-rotation cost and avoids designing every screen twice).
 - Pure-black AMOLED theme (pixels off = power saved). Prototype: `ui-prototype/index.html`.
 
+## Configuration & provisioning
+
+No text entry on the 20 mm screen — config happens off-device:
+
+- **First-time setup & changing Wi-Fi network → SoftAP captive portal.** The device hosts a setup
+  hotspot; join it, open `192.168.4.1`, enter Wi-Fi + device name. (Wi-Fi changes must use this path —
+  the on-LAN page can't change the network without dropping its own connection.)
+- **All ongoing config → the device's web page on your own network** (`http://ma-esportable.local`):
+  name, MA server/token, OTA, etc. No network-switching, works on any device incl. iPhone (the device
+  already runs an HTTP server). This is the primary config path.
+- **On-device Settings** = view + simple touch controls only (brightness, sleep timeout, audio-sync,
+  haptics, calibrate-remote, volume) + status. A "Change Wi-Fi" button reboots into setup mode.
+- **BLE config: deferred (possible future add).** Its only unique win is skipping the one-time
+  first-setup/Wi-Fi-change network switch; ongoing config is already switch-free via the on-LAN page.
+  It's Android/desktop-Chrome only (no iOS Safari) so it can't replace SoftAP anyway. Cheap to add
+  later — ESP-IDF treats SoftAP/BLE as interchangeable provisioning transports and the S3 has the
+  radio. (BLE for config/data only — unrelated to BT audio/A2DP, which the S3 can't do.)
+
 ## Control scheme — headphone inline remote
 
 A distinctive feature: control the device from the buttons on the headphone cable, so the
