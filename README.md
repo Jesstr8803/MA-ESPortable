@@ -55,7 +55,8 @@ rather than stored locally.
 
 | Area | Direction |
 |---|---|
-| **MCU** | ESP32-S3 (8 MB PSRAM, 16 MB flash) — enough for LVGL framebuffers + a deep audio buffer. |
+| **Platform** | **ESP / ESP-IDF** (decided). Keeps the official `sendspin-cpp` SDK + predecessor code, and the MCU battery/instant-on advantage. Linux SBC rejected (would gut battery + instant-on). |
+| **MCU** | **ESP32-S3** by default (8 MB PSRAM, 16 MB flash — enough for LVGL framebuffers + a deep audio buffer). **Escalate to ESP32-P4 + C6** only if the spike proves the S3 can't drive the GUI/Tier-2 smoothly. The spike *is* the S3-vs-P4 test. |
 | **Display** | AMOLED (premium look). Burn-in mitigated by screen-sleep + dimming + periodic pixel-shift. Uses a QSPI display driver. |
 | **Audio** | Our own I²S DAC + headphone amp (PCM510x-class line-out + small stereo HP amp like TPA6132, *or* an integrated codec — revisit at PCB time). Predecessor's PCM510x code carries over. |
 | **Jack** | 4-conductor **TRRS** so we can read the headphone inline remote (see Control scheme). |
