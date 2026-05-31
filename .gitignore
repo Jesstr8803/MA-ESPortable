@@ -1,0 +1,13 @@
+# Claude local settings (machine-specific paths)
+.claude/settings.local.json
+
+# Build artifacts (adjust once toolchain is chosen)
+build/
+managed_components/
+sdkconfig.old
+*.log
+
+# OS / editor
+Thumbs.db
+.DS_Store
+.vscode/
