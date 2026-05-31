@@ -211,10 +211,22 @@ Built incrementally, but architected for the full vision from the start.
   group-switch. (This is the *complete* Sendspin controller command set — it is transport only.)
 
 **Tier 2 — Library browse / search / queue (a separate, bigger lift):**
-- **Not** part of Sendspin — requires integrating **Music Assistant's own WebSocket API** as a
-  second protocol client (auth, library queries, search, queue management).
-- Roughly doubles firmware + UI work (scrollable lists, on-screen search keyboard, pagination).
-- Needs its own feasibility research for ESP32 (large JSON responses).
+- **Not** part of Sendspin — integrate **Music Assistant's own WebSocket API** (port **8095**) as a
+  second protocol client. Reference spec: the official `music-assistant-client` (controllers:
+  `music`, `players`, `player_queues`, `auth`) + auto-generated docs at `http://<ma-ip>:8095/api-docs`.
+- **Playback loop:** browse via the MA WS API → pick media → `play_media` targeting *our own* player →
+  MA streams it back via Sendspin. (Could also control other rooms.)
+- **Feasibility verdict (researched):** *feasible on the S3 as a paged "lite browse,"* and it's the
+  **heaviest software in the project** + the #1 reason the spike might tip us to the **P4**. Key facts:
+  pagination via limit/offset (default 500; we use ~25–50/page); browse is a URI tree
+  (`library://artist/1`); **auth required since MA schema v28** (long-lived token).
+- **Scope it lite** (80/20): search + playlists + recently-played + paged artists/albums with lazy
+  thumbnails — **not** a mirror of the full desktop library tree.
+- **Risks & mitigations:** album-art thumbnails while scrolling = the perf killer → lazy-load visible
+  rows only, small thumbs, LRU cache in PSRAM/SD, prefetch. **Two simultaneous WebSockets** (Sendspin +
+  MA) + LVGL + audio = the P4-escalation driver → the **spike must stress-test exactly this**. Auth
+  token onboarding → **paste it into the captive-portal web page** (never type a long token on the
+  touch keyboard). Independent reconnect per socket; Tier-1 keeps working if MA-control drops.
 
 **Build order:** spike (prove LVGL + WiFi + I²S audio + the roles coexist on the dev rig, and the
 headphone-remote decode works) → Tier 1 working → custom PCB → Tier 2 → enclosure.
