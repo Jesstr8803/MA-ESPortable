@@ -71,7 +71,7 @@ CNC-aluminum v2 (u.FL external antenna makes the metal body viable).
 | **Platform** | **ESP / ESP-IDF** (decided). Keeps the official `sendspin-cpp` SDK + predecessor code, and the MCU battery/instant-on advantage. Linux SBC rejected (would gut battery + instant-on). |
 | **MCU** | **ESP32-S3** by default (8 MB PSRAM, 16 MB flash — enough for LVGL framebuffers + a deep audio buffer). **Escalate to ESP32-P4 + C6** only if the spike proves the S3 can't drive the GUI/Tier-2 smoothly. The spike *is* the S3-vs-P4 test. |
 | **Display** | **Waveshare ESP32-S3-AMOLED-1.91 (touch)** — 240×536 AMOLED bar (QSPI). Premium look; burn-in mitigated by screen-sleep + dimming + periodic pixel-shift. See Reproducibility below. |
-| **Audio** | Our own I²S DAC + headphone amp (PCM510x-class line-out + small stereo HP amp like TPA6132, *or* an integrated codec — revisit at PCB time). Predecessor's PCM510x code carries over. |
+| **Audio** | **Cirrus Logic CS43131** — single-chip DAC + ground-centered headphone amp (130 dB DR, −115 dB THD+N, 32-bit/384 kHz, 2 Vrms into 600 Ω). One chip = whole output stage; covers IEMs → demanding over-ears. In stock on LCSC (C1554754 / C1554759) → JLCPCB-assemblable. 5×5 QFN (needs assembly, not hand-solder). |
 | **Jack** | 4-conductor **TRRS** so we can read the headphone inline remote (see Control scheme). |
 | **Power** | Onboard charging (board's MX1.25 header). **Battery: deferred** — principle is an *off-the-shelf swappable cell* (not a glued pouch) that fits behind the board; thickness budget → capacity → runtime. Stretch runtime via screen-sleep + WiFi power-save + deep buffer. |
 | **Sensors** | QMI8658 6-axis IMU (wake-on-pickup). Haptic motor. |
@@ -90,6 +90,11 @@ web-flasher on GitHub Pages).
 - Our **carrier PCB** holds only the analog section: I²S DAC + headphone amp + TRRS jack +
   headphone-remote ADC-sense + haptic driver + jack-detect. It mates to the display board's
   exposed header / castellated pads.
+- **Haptics ("Taptic-style"):** a **TI DRV2605L** driver (LCSC C527464; 100+ built-in effects +
+  closed-loop auto-resonance with overdrive/braking) driving an **LRA** (not a buzzy ERM). Gives
+  crisp designed taps for the buttonless touch UI. *The LRA must be rigidly bonded to the chassis*
+  — half the feel is mechanical (an enclosure constraint). Won't match Apple's bespoke Taptic
+  Engine, but uses the same LRA + waveform-engine architecture.
 - **Reproduction = "buy Waveshare board + order the carrier from JLCPCB (or buy it assembled on
   Tindie) + print the STLs + assemble."**
 
@@ -117,6 +122,54 @@ build, *plus* a JLCPCB-Assembly BOM/CPL for pre-assembled / Tindie batches. Pref
 parts that are also stocked at DigiKey/Mouser. Version the PCB on the silkscreen and document the
 PCB-rev ↔ firmware interlock.
 
+## Audio chain
+
+Quality is a priority (the device is for good wired headphones), within the LCSC/JLCPCB
+reproducibility constraint.
+
+- **DAC + amp: Cirrus Logic CS43131** (single chip). 32-bit/384 kHz, 130 dB DR, −115 dB THD+N,
+  integrated **ground-centered Class-H headphone amp** delivering 2 Vrms into 600 Ω. It's the chip
+  in premium USB-C "dongle DACs" — so it's a proven match for expensive headphones, and a single
+  chip is the *entire* output stage (no separate amp). Ground-centered output = no signal-path
+  coupling caps (clean for IEMs) + low output impedance; 2 Vrms into 600 Ω = enough for
+  high-impedance over-ears. **In stock on LCSC** (C1554754 / C1554759, ~$3.5–4) → JLCPCB-assemblable.
+  0.4 mm-pitch QFN-40, so it relies on JLCPCB assembly (rest of the board stays hand-solderable).
+- **Clean power:** a dedicated ultra-low-noise LDO (LT3042-class) on an isolated analog island
+  feeding the CS43131, star-grounded away from the ESP32/WiFi switching noise. (Layout discipline
+  matters as much as the chip.)
+- **High-res:** the chip supports up to 32-bit/384 kHz, future-proofing past what MA currently
+  serves (the predecessor was 16-bit only).
+- **USB-DAC mode:** routed through the ESP32-S3's native USB (USB Audio Class device) → I²S →
+  CS43131. One audio path, two sources (WiFi/Sendspin or USB).
+- **MCLK:** supplied from the ESP32-S3 I²S MCLK pin. Driver: an I²C init register sequence (not
+  zero-driver like the predecessor's PCM5102A, but bounded and one-time).
+- **Bluetooth:** dropped — it undercuts the wired-quality goal and the S3 can't do A2DP anyway.
+
+## Power tree
+
+```
+USB-C 5V ──► [board's charger] ── charges cell + power-path ──► board system (S3 + AMOLED + 3V3)
+CELL ──[DW01A + dual-MOSFET protection]── VBAT ──┬──► board MX1.25 battery input
+ (off-the-shelf, carrier holder)                 ├──► MAX17048 fuel gauge (I²C → accurate %)
+                                                 ├──► LT3042 ultra-low-noise LDO ──► 1.8V analog
+                                                 │       island ──► CS43131  ★audio-critical★
+                                                 └──► DRV2605L haptics (VBAT/3V3)
+Power button ──► short = deep-sleep / long = latch-off      IMU motion-int ──► wake
+```
+
+- **One charger — the board's.** It already charges the cell and runs a power-path, so the device
+  **plays while charging**. We add no second charger (two on one cell is trouble).
+- **Cell on the carrier**, through a **DW01A + dual-MOSFET protection** stage (LCSC C700964) so *any*
+  off-the-shelf cell is safe — then feeds the board's battery input and the carrier rails.
+- **Fuel gauge: MAX17048** (LCSC C2682616) — accurate battery % over I²C (ModelGauge, no sense
+  resistor, 3 µA).
+- **Audio rail is isolated:** CS43131 is fed from **VBAT → LT3042 ultra-low-noise LDO** (LCSC C666568)
+  on its **own analog ground island**, star-tied to system ground, *away* from the board's WiFi/
+  switching noise — **not** off the board's 3.3 V. This is where audio cleanliness is won or lost.
+- **Power-off: both modes.** Short-press → S3 **deep-sleep** (~tens of µA, instant wake via button or
+  IMU motion). Long-press → **true hardware latch-off** (soft-latch load switch; zero drain for
+  storage). The MCU holds the latch enable and releases it on long-press.
+
 ## Control scheme — headphone inline remote
 
 A distinctive feature: control the device from the buttons on the headphone cable, so the
@@ -130,6 +183,20 @@ minimalist slab needs no face buttons.
 - **Robustness:** a *"learn my remote"* calibration handles CTIA/OMTP and Apple/Android resistor
   variance; ESD diodes on the jack; jack-detect so sense is only active when plugged; graceful
   fallback to touch-only for plain (no-remote) headphones.
+
+**Design specifics:**
+- **Divider:** Vref 3.3 V, **Rbias ≈ 2.2 kΩ** → bands: center ~0 V, Vol+ ~0.33 V, Vol− ~0.58 V,
+  no-press ~1.65 V (with mic) / 3.3 V (open). RC filter (~1 kΩ + 100 nF) into the ADC for
+  debounce. Drop Rbias to ~1 kΩ if Vol+/Vol− need wider separation.
+- ⚠️ **Must use an ADC1 pin (GPIO1–10)** — the S3's **ADC2 is unusable while WiFi is on**, and WiFi
+  is always on. Pick a free ADC1 channel off the 1.91 header at pinout time.
+- **ESD array** on the jack; keep L/R ESD caps <10 pF so they don't roll off treble.
+- **CTIA only** (modern standard); OMTP just won't sense (calibration detects + warns). No
+  auto-switch IC — not worth it for a personal device.
+- **Jack-detect contact → GPIO** gives **auto-pause on unplug** / resume on re-plug, "headphones
+  connected" UI state, and power savings (sense only when plugged).
+- **Firmware:** oversample (~16–64 avg) → classify to calibrated band midpoints → ~30 ms debounce →
+  events, with press-and-hold repeat for volume and an optional long-press mapping (seek/next).
 
 ## Software architecture
 
