@@ -64,6 +64,33 @@ rather than stored locally.
 | **Sensors** | QMI8658 6-axis IMU (wake-on-pickup). Haptic motor. |
 | **Build** | **Prototype on an AMOLED dev board** (e.g. Waveshare ESP32-S3-Touch-AMOLED-1.8, 368×448) + DAC + TRRS breakouts → then a **custom PCB** → resin-printed v1 enclosure → CNC-aluminum v2. |
 
+## Reproducibility & hardware architecture
+
+A core goal: **anyone should be able to build one.** Off-the-shelf parts where possible,
+3D-print files provided, and any custom PCB orderable by anyone (JLCPCB Gerbers + BOM) and/or
+sold assembled on Tindie. Same open-hardware ethos as the predecessor (which shipped a WebSerial
+web-flasher on GitHub Pages).
+
+**Architecture: a carrier / shield PCB on an off-the-shelf Waveshare AMOLED display board.**
+- The **Waveshare board** provides the hard parts: ESP32-S3 module, WiFi antenna/RF, AMOLED panel
+  (QSPI) + touch, PMIC, IMU. (No RF/antenna/FPC layout for us to get right.)
+- Our **carrier PCB** holds only the analog section: I²S DAC + headphone amp + TRRS jack +
+  headphone-remote ADC-sense + haptic driver + jack-detect. It mates to the display board's
+  exposed header / castellated pads.
+- **Reproduction = "buy Waveshare board + order the carrier from JLCPCB (or buy it assembled on
+  Tindie) + print the STLs + assemble."**
+
+**Leading display board: ESP32-S3-Touch-AMOLED-1.8** (368×448) — exposes **7 GPIO + I²C + UART +
+1 mm-pitch expansion pads**, which is *just enough* for the carrier's needs (I²S ×3, ADC ×1,
+haptic ×1, jack-detect ×1, + shared I²C). The 1.75″ exposes only ~3 GPIO — likely too few.
+⚠️ **Gating check:** confirm those 7 GPIOs are actually free and that I²S can route to them — with
+8 MB **octal** PSRAM, GPIO35/36/37 are reserved for PSRAM and can't be used for I²S.
+
+**PCB design-for-manufacture:** hand-solderable (larger SMD, no fine-pitch QFN) so DIYers can
+build, *plus* a JLCPCB-Assembly BOM/CPL for pre-assembled / Tindie batches. Prefer LCSC "Basic"
+parts that are also stocked at DigiKey/Mouser. Version the PCB on the silkscreen and document the
+PCB-rev ↔ firmware interlock.
+
 ## Control scheme — headphone inline remote
 
 A distinctive feature: control the device from the buttons on the headphone cable, so the
