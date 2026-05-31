@@ -71,7 +71,7 @@ CNC-aluminum v2 (u.FL external antenna makes the metal body viable).
 | **Platform** | **ESP / ESP-IDF** (decided). Keeps the official `sendspin-cpp` SDK + predecessor code, and the MCU battery/instant-on advantage. Linux SBC rejected (would gut battery + instant-on). |
 | **MCU** | **ESP32-S3** by default (8 MB PSRAM, 16 MB flash — enough for LVGL framebuffers + a deep audio buffer). **Escalate to ESP32-P4 + C6** only if the spike proves the S3 can't drive the GUI/Tier-2 smoothly. The spike *is* the S3-vs-P4 test. |
 | **Display** | **Waveshare ESP32-S3-AMOLED-1.91 (touch)** — 240×536 AMOLED bar (QSPI). Premium look; burn-in mitigated by screen-sleep + dimming + periodic pixel-shift. See Reproducibility below. |
-| **Audio** | Our own I²S DAC + headphone amp (PCM510x-class line-out + small stereo HP amp like TPA6132, *or* an integrated codec — revisit at PCB time). Predecessor's PCM510x code carries over. |
+| **Audio** | **Cirrus Logic CS43131** — single-chip DAC + ground-centered headphone amp (130 dB DR, −115 dB THD+N, 32-bit/384 kHz, 2 Vrms into 600 Ω). One chip = whole output stage; covers IEMs → demanding over-ears. In stock on LCSC (C1554754 / C1554759) → JLCPCB-assemblable. 5×5 QFN (needs assembly, not hand-solder). |
 | **Jack** | 4-conductor **TRRS** so we can read the headphone inline remote (see Control scheme). |
 | **Power** | Onboard charging (board's MX1.25 header). **Battery: deferred** — principle is an *off-the-shelf swappable cell* (not a glued pouch) that fits behind the board; thickness budget → capacity → runtime. Stretch runtime via screen-sleep + WiFi power-save + deep buffer. |
 | **Sensors** | QMI8658 6-axis IMU (wake-on-pickup). Haptic motor. |
@@ -116,6 +116,29 @@ Key spec details (for firmware + enclosure):
 build, *plus* a JLCPCB-Assembly BOM/CPL for pre-assembled / Tindie batches. Prefer LCSC "Basic"
 parts that are also stocked at DigiKey/Mouser. Version the PCB on the silkscreen and document the
 PCB-rev ↔ firmware interlock.
+
+## Audio chain
+
+Quality is a priority (the device is for good wired headphones), within the LCSC/JLCPCB
+reproducibility constraint.
+
+- **DAC + amp: Cirrus Logic CS43131** (single chip). 32-bit/384 kHz, 130 dB DR, −115 dB THD+N,
+  integrated **ground-centered Class-H headphone amp** delivering 2 Vrms into 600 Ω. It's the chip
+  in premium USB-C "dongle DACs" — so it's a proven match for expensive headphones, and a single
+  chip is the *entire* output stage (no separate amp). Ground-centered output = no signal-path
+  coupling caps (clean for IEMs) + low output impedance; 2 Vrms into 600 Ω = enough for
+  high-impedance over-ears. **In stock on LCSC** (C1554754 / C1554759, ~$3.5–4) → JLCPCB-assemblable.
+  0.4 mm-pitch QFN-40, so it relies on JLCPCB assembly (rest of the board stays hand-solderable).
+- **Clean power:** a dedicated ultra-low-noise LDO (LT3042-class) on an isolated analog island
+  feeding the CS43131, star-grounded away from the ESP32/WiFi switching noise. (Layout discipline
+  matters as much as the chip.)
+- **High-res:** the chip supports up to 32-bit/384 kHz, future-proofing past what MA currently
+  serves (the predecessor was 16-bit only).
+- **USB-DAC mode:** routed through the ESP32-S3's native USB (USB Audio Class device) → I²S →
+  CS43131. One audio path, two sources (WiFi/Sendspin or USB).
+- **MCLK:** supplied from the ESP32-S3 I²S MCLK pin. Driver: an I²C init register sequence (not
+  zero-driver like the predecessor's PCM5102A, but bounded and one-time).
+- **Bluetooth:** dropped — it undercuts the wired-quality goal and the S3 can't do A2DP anyway.
 
 ## Control scheme — headphone inline remote
 
