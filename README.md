@@ -209,8 +209,11 @@ No text entry on the 20 mm screen — config happens off-device:
   already runs an HTTP server). This is the primary config path.
 - **On-device Settings** = view + simple touch controls only (brightness, sleep timeout, audio-sync,
   haptics, calibrate-remote, volume) + status. A "Change Wi-Fi" button reboots into setup mode.
-- **BLE config: not used** — the on-LAN page already covers on-the-fly config without Web Bluetooth's
-  iOS/Safari gap or the extra firmware. Net: one network-switch ever (first setup) + rare Wi-Fi change.
+- **BLE config: deferred (possible future add).** Its only unique win is skipping the one-time
+  first-setup/Wi-Fi-change network switch; ongoing config is already switch-free via the on-LAN page.
+  It's Android/desktop-Chrome only (no iOS Safari) so it can't replace SoftAP anyway. Cheap to add
+  later — ESP-IDF treats SoftAP/BLE as interchangeable provisioning transports and the S3 has the
+  radio. (BLE for config/data only — unrelated to BT audio/A2DP, which the S3 can't do.)
 
 ## Control scheme — headphone inline remote
 
