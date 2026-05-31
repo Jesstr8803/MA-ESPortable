@@ -152,7 +152,7 @@
     <div class="ruler" id="ruler"></div>
     <div class="rulercap">↑ make this measure <b>50&nbsp;mm</b> with a real ruler</div>
 
-    <div class="tip"><b>Swipe</b> (or mouse-drag): up = Library, down/right = back. Tap a tile → list → album → track to play. Mini-bar → Now Playing. Lock = hold the ring.</div>
+    <div class="tip"><b>Swipe</b> (or mouse-drag): on Now Playing — up = Library, down = Lock. Elsewhere — down/right = back. Tap a tile → list → album → track. Unlock = hold the ring. (Real device also auto-locks on timeout / power button / pocket.)</div>
   </div>
 
   <div class="stage">
@@ -327,7 +327,8 @@
     const dx=e.clientX-sx, dy=e.clientY-sy; if(Math.hypot(dx,dy)<22) return; swiped=true;
     const top=stack[stack.length-1];
     if(Math.abs(dx)>Math.abs(dy)){ if(dx>0 && top!=='now') back(); }
-    else { if(dy<0){ if(top==='now') go('library'); } else { if(top!=='now'&&top!=='lock') back(); } }
+    else { if(dy<0){ if(top==='now') go('library'); }                 // swipe up = Library
+           else { if(top==='now') jump('lock'); else if(top!=='lock') back(); } }  // swipe down on Now = lock; else back
   });
 
   /* hold-to-unlock */

@@ -176,6 +176,9 @@ The panel is tiny — **19.8 × 44.3 mm** (smaller than a stick of gum). The UI 
 
 - **Glanceable + remote-first.** The headphone remote handles play/skip/volume without looking; the
   IMU wakes the screen; touch is for *glances* and light navigation, not constant poking.
+- **Locking is automatic** — inactivity timeout (the same event that sleeps the screen for battery),
+  power-button short-press, or IMU pocket detection. No on-screen lock button (wastes space). Manual
+  option: swipe down on Now Playing. Unlock = IMU wake-on-pickup → hold the ring.
 - **Big, sparse touch targets.** A fingertip is ~8–10 mm — half the screen width per button — so
   layouts stay simple with large hit areas. No dense UIs.
 - **No on-device text search (v1).** A full keyboard on a 20 mm screen is miserable. Cover it with
