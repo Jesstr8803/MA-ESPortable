@@ -166,9 +166,12 @@ Power button ──► short = deep-sleep / long = latch-off      IMU motion-int
 - **Audio rail is isolated:** CS43131 is fed from **VBAT → LT3042 ultra-low-noise LDO** (LCSC C666568)
   on its **own analog ground island**, star-tied to system ground, *away* from the board's WiFi/
   switching noise — **not** off the board's 3.3 V. This is where audio cleanliness is won or lost.
-- **Power-off: both modes.** Short-press → S3 **deep-sleep** (~tens of µA, instant wake via button or
-  IMU motion). Long-press → **true hardware latch-off** (soft-latch load switch; zero drain for
-  storage). The MCU holds the latch enable and releases it on long-press.
+- **Button: reuse the board's BOOT button (GPIO0)** — no dedicated power button. Firmware reads it:
+  short = sleep/lock, long = deep-sleep "off", very-long = force reboot. GPIO0 is RTC-capable so it
+  **wakes from deep-sleep** (IMU can too); holding BOOT at reset = flash/recovery mode (free). Tradeoff:
+  no *true* latch-off (BOOT isn't on a latch we control), so "off" = deep-sleep — on this dev board it
+  self-drains over ~weeks, fine for a regularly-charged device. A carrier latch + dedicated button can
+  be added later if true zero-drain off is ever wanted. (GPIO0 is a strapping pin: only read it.)
 
 ## UI design principles
 
