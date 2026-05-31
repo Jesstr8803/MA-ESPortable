@@ -53,20 +53,20 @@
 
   /* now playing */
   .np{padding:0 16px;flex:1;}
-  .art{width:208px;height:208px;margin:6px auto 0;border-radius:12px;background:linear-gradient(135deg,#3a2b6e,#b14a8a 55%,#e8743b);box-shadow:0 8px 24px rgba(177,74,138,.35);display:flex;align-items:center;justify-content:center;}
+  .art{width:184px;height:184px;margin:4px auto 0;border-radius:12px;background:linear-gradient(135deg,#3a2b6e,#b14a8a 55%,#e8743b);box-shadow:0 8px 24px rgba(177,74,138,.35);display:flex;align-items:center;justify-content:center;}
   .art svg{width:54px;height:54px;opacity:.85;}
-  .track{margin-top:16px;text-align:center;}
+  .track{margin-top:10px;text-align:center;}
   .track .title{font-size:21px;font-weight:700;line-height:1.2;} .track .title>span{max-width:100%;}
   .track .artist{font-size:16px;color:var(--dim);margin-top:4px;}
   .track .album{font-size:13px;color:var(--dim2);margin-top:2px;}
-  .progress{margin-top:14px;} .bar{height:4px;background:#2a2a30;border-radius:2px;overflow:hidden;} .bar i{display:block;height:100%;width:38%;background:var(--accent);border-radius:2px;}
+  .progress{margin-top:10px;} .bar{height:4px;background:#2a2a30;border-radius:2px;overflow:hidden;} .bar i{display:block;height:100%;width:38%;background:var(--accent);border-radius:2px;}
   .times{display:flex;justify-content:space-between;font-size:11px;color:var(--dim2);margin-top:5px;}
-  .transport{display:flex;align-items:center;justify-content:space-around;margin-top:18px;padding:0 4px;}
+  .transport{display:flex;align-items:center;justify-content:space-around;margin-top:12px;padding:0 4px;}
   .transport .iconbtn svg{fill:var(--fg);cursor:pointer;width:34px;height:34px;}
   .iconbtn{display:flex;align-items:center;justify-content:center;width:60px;height:60px;}
   .playbtn{width:80px;height:80px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;}
   .playbtn svg{fill:#000;width:32px;height:32px;}
-  .secondary{display:flex;justify-content:center;gap:46px;margin-top:14px;color:var(--dim);}
+  .secondary{display:flex;justify-content:center;gap:46px;margin-top:10px;color:var(--dim);}
   .secondary svg{width:26px;height:26px;fill:var(--dim);cursor:pointer;} .secondary svg.on{fill:var(--accent);}
   /* on-screen volume slider (tall hit zone for fingers) */
   .volrow{display:flex;align-items:center;gap:10px;margin-top:10px;padding:0 8px;}
@@ -147,14 +147,6 @@
   .tog.on{background:var(--accent);} .tog i{position:absolute;top:2px;left:2px;width:21px;height:21px;border-radius:50%;background:#fff;transition:left .15s;} .tog.on i{left:21px;}
   .gear{cursor:pointer;fill:var(--dim);}
 
-  /* volume overlay (transient) */
-  .voloverlay{position:absolute;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:70;}
-  .voloverlay.show{display:flex;}
-  .volcard{width:172px;background:#1a1a20;border-radius:16px;padding:22px 20px;text-align:center;}
-  .volcard svg{width:36px;height:36px;fill:#fff;}
-  .volcard .vbar{height:8px;background:#2a2a30;border-radius:4px;margin:16px 0 8px;overflow:hidden;} .volcard .vbar i{display:block;height:100%;background:var(--accent);}
-  .volcard .vpct{font-size:14px;color:var(--dim);}
-
   /* fingertip puck (~9 mm = 109 px) */
   .finger{position:absolute;width:109px;height:109px;border-radius:50%;background:rgba(90,200,250,.22);border:2px solid rgba(90,200,250,.85);transform:translate(-50%,-50%);pointer-events:none;display:none;z-index:60;align-items:center;justify-content:center;font-size:11px;color:#bfeaff;}
 </style>
@@ -180,7 +172,6 @@
       <button data-jump="connecting">Connecting</button>
       <button data-jump="charging">Charging</button>
       <button data-jump="settings">Settings</button>
-      <button id="volBtn">Volume ▸</button>
     </div>
 
     <h2>Orientation</h2>
@@ -213,11 +204,6 @@
       <div class="bezel">
         <div class="screen" id="screen">
           <div class="finger" id="finger">9mm</div>
-          <div class="voloverlay" id="volOverlay"><div class="volcard">
-            <svg viewBox="0 0 24 24"><path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2a4.5 4.5 0 00-2.5-4.03v8.06A4.5 4.5 0 0016.5 12z"/></svg>
-            <div class="vbar"><i id="volBar" style="width:65%"></i></div>
-            <div class="vpct" id="volPct">Volume 65%</div>
-          </div></div>
 
           <!-- NOW PLAYING (portrait) -->
           <div class="view" data-screen="now">
@@ -430,12 +416,9 @@
     document.querySelectorAll('#screenBtns button, #stateBtns button').forEach(b=>b.classList.toggle('active',b.dataset.jump===map[top]));
     applyMarquee();
   }
-  /* transient volume overlay */
-  let volT; function showVol(){ const o=document.getElementById('volOverlay'); o.classList.add('show'); clearTimeout(volT); volT=setTimeout(()=>o.classList.remove('show'),1600); }
 
   scr.addEventListener('click',e=>{
     if(swiped){ swiped=false; return; }
-    if(e.target.closest('#volOverlay')){ document.getElementById('volOverlay').classList.remove('show'); return; }
     const tog_=e.target.closest('[data-tog]'); if(tog_){ tog_.classList.toggle('on'); return; }
     const go_=e.target.closest('[data-go]'),back_=e.target.closest('[data-back]'),jump_=e.target.closest('[data-jump]'),play_=e.target.closest('[data-play]'),tp_=e.target.closest('[data-toggleplay]');
     if(tp_){ playing=!playing; updatePlay(); return; }
@@ -448,9 +431,7 @@
   /* volume slider (on-screen, for headphones without inline controls) */
   let vDragging=false, vEl=null;
   function setVol(s,clientX){ const r=s.getBoundingClientRect(); let p=(clientX-r.left)/r.width; p=Math.max(0,Math.min(1,p));
-    const pct=Math.round(p*100); document.querySelectorAll('.vfill').forEach(f=>f.style.width=pct+'%');
-    const vb=document.getElementById('volBar'); if(vb)vb.style.width=pct+'%';
-    const vp=document.getElementById('volPct'); if(vp)vp.textContent='Volume '+pct+'%'; showVol(); }
+    document.querySelectorAll('.vfill').forEach(f=>f.style.width=Math.round(p*100)+'%'); }
 
   /* swipe nav */
   let sx=0,sy=0,swiped=false,startedOnVol=false;
@@ -475,7 +456,6 @@
 
   /* panel */
   document.querySelectorAll('#screenBtns button, #stateBtns button').forEach(b=>{ if(!b.dataset.jump)return; b.onclick=()=>{ const n=b.dataset.jump; if(n==='queue')renderQueue(); jump(n); }; });
-  document.getElementById('volBtn').onclick=showVol;
   document.querySelectorAll('#orientBtns button').forEach(b=>b.onclick=()=>{ document.querySelectorAll('#orientBtns button').forEach(x=>x.classList.remove('active')); b.classList.add('active'); orient=b.dataset.orient; render(); });
   document.querySelectorAll('#viewBtns button').forEach(b=>b.onclick=()=>{ document.querySelectorAll('#viewBtns button').forEach(x=>x.classList.remove('active')); b.classList.add('active'); viewMode=b.dataset.view; applyView(); });
 
