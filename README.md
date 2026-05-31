@@ -166,9 +166,36 @@ Power button ──► short = deep-sleep / long = latch-off      IMU motion-int
 - **Audio rail is isolated:** CS43131 is fed from **VBAT → LT3042 ultra-low-noise LDO** (LCSC C666568)
   on its **own analog ground island**, star-tied to system ground, *away* from the board's WiFi/
   switching noise — **not** off the board's 3.3 V. This is where audio cleanliness is won or lost.
-- **Power-off: both modes.** Short-press → S3 **deep-sleep** (~tens of µA, instant wake via button or
-  IMU motion). Long-press → **true hardware latch-off** (soft-latch load switch; zero drain for
-  storage). The MCU holds the latch enable and releases it on long-press.
+- **Button: reuse the board's BOOT button (GPIO0)** — no dedicated power button. Firmware reads it:
+  short = sleep/lock, long = deep-sleep "off", very-long = force reboot. GPIO0 is RTC-capable so it
+  **wakes from deep-sleep** (IMU can too); holding BOOT at reset = flash/recovery mode (free). Tradeoff:
+  no *true* latch-off (BOOT isn't on a latch we control), so "off" = deep-sleep — on this dev board it
+  self-drains over ~weeks, fine for a regularly-charged device. A carrier latch + dedicated button can
+  be added later if true zero-drain off is ever wanted. (GPIO0 is a strapping pin: only read it.)
+
+## UI design principles
+
+The panel is tiny — **19.8 × 44.3 mm** (smaller than a stick of gum). The UI leans into that:
+
+- **Glanceable + remote-first.** The headphone remote handles play/skip/volume without looking; the
+  IMU wakes the screen; touch is for *glances* and light navigation, not constant poking.
+- **Locking is automatic** — inactivity timeout (the same event that sleeps the screen for battery),
+  power-button short-press, or IMU pocket detection. No on-screen lock button (wastes space). Manual
+  option: swipe down on Now Playing.
+- **Wake ≠ unlock.** Lift-to-wake (IMU) only turns the screen *on* to the locked screen — it never
+  unlocks. **Unlocking is the hold-the-ring gesture only**, so handling/pocket movement can't
+  accidentally unlock it.
+- **Big, sparse touch targets.** A fingertip is ~8–10 mm — half the screen width per button — so
+  layouts stay simple with large hit areas. No dense UIs.
+- **No on-device text search (v1).** A full keyboard on a 20 mm screen is miserable. Cover it with
+  browse-first (artists/albums/playlists/recently-played/queue) + *search from your phone* to start
+  playback. **Voice search** is the future replacement (its own mini-project — open-vocab STT needs
+  a mic + cloud or Home Assistant Assist). We **reserve mic footprints** now (see below), build voice
+  later.
+- **Orientation: portrait primary** (fits the tall bar + scrolling lists). Landscape is an optional
+  *fixed* setting (a now-playing "media widget" layout), **not** dynamic auto-rotate (saves the
+  runtime-rotation cost and avoids designing every screen twice).
+- Pure-black AMOLED theme (pixels off = power saved). Prototype: `ui-prototype/index.html`.
 
 ## Control scheme — headphone inline remote
 
@@ -197,6 +224,11 @@ minimalist slab needs no face buttons.
   connected" UI state, and power savings (sense only when plugged).
 - **Firmware:** oversample (~16–64 avg) → classify to calibrated band midpoints → ~30 ms debounce →
   events, with press-and-hold repeat for volume and an optional long-press mapping (seek/next).
+- **Reserved for future voice search** (unpopulated footprints, build later): a *separate AC-coupled
+  tap* off this same mic node (series cap → preamp → spare ADC1) captures the headset mic's audio
+  alongside the DC button-sense — phones do this dual-tap on one mic line (works only with mic'd
+  headsets). Plus an optional **onboard MEMS mic** footprint for mic-less cans / no-headphones. Both
+  cost ~nothing as unpopulated pads and avoid a board respin if voice is added.
 
 ## Software architecture
 

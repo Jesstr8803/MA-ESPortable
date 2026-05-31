@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MA-ESPortable · UI Prototype</title>
+<!--
+  MA-ESPortable UI prototype (navigable).
+  - Device screen = real panel: 240 x 536 px (ESP32-S3-AMOLED-1.91).
+  - Library is a 2x2 tile menu (big finger targets). Tiles -> list -> album -> play.
+  - Long titles auto-scroll (marquee); LVGL does this natively (LV_LABEL_LONG_SCROLL).
+  - Swipe: up = into Library, down/right = back. Hold the lock ring to unlock.
+  - "Physical 1:1" scales to this monitor (~225 PPI); "Touch check" shows a 9 mm fingertip.
+-->
+<style>
+  :root{ --accent:#5AC8FA; --bg:#000; --fg:#fff; --dim:#9a9aa0; --dim2:#6a6a70; }
+  *{box-sizing:border-box;-webkit-user-select:none;user-select:none;}
+  html,body{margin:0;height:100%;background:#1b1d22;color:#cfd2d8;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;}
+  .app{display:flex;gap:28px;padding:24px;align-items:flex-start;flex-wrap:wrap;}
+
+  .panel{width:280px;background:#23262d;border-radius:12px;padding:16px 18px;font-size:13px;}
+  .panel h1{font-size:15px;margin:0 0 4px;color:#fff;}
+  .panel .sub{color:#8a8e96;font-size:11px;margin-bottom:14px;line-height:1.4;}
+  .panel h2{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#7f8490;margin:16px 0 6px;}
+  .btnrow{display:flex;flex-wrap:wrap;gap:6px;}
+  .panel button{background:#31353d;color:#dfe2e8;border:1px solid #3d424b;border-radius:7px;padding:7px 10px;font-size:12px;cursor:pointer;}
+  .panel button.active{background:var(--accent);color:#001;border-color:var(--accent);font-weight:600;}
+  .panel label{display:block;margin:10px 0 4px;color:#aeb3bd;}
+  .panel input[type=range]{width:100%;}
+  .ruler{height:14px;background:repeating-linear-gradient(90deg,#5AC8FA 0,#5AC8FA 1px,transparent 1px,transparent 10%);border:1px solid #3d424b;border-radius:3px;margin-top:6px;}
+  .rulercap{font-size:10px;color:#7f8490;margin-top:3px;line-height:1.4;}
+  .tip{font-size:11px;color:#7f8490;margin-top:10px;line-height:1.4;}
+
+  .stage{flex:1;min-width:300px;display:flex;justify-content:center;align-items:flex-start;padding-top:10px;min-height:560px;}
+  .device-wrap{transform-origin:top center;transition:transform .15s ease;}
+  .bezel{padding:10px;background:linear-gradient(145deg,#2b2b30,#0c0c0e);border-radius:26px;box-shadow:0 10px 40px rgba(0,0,0,.6),inset 0 0 0 1px #000;}
+  .screen{width:240px;height:536px;background:var(--bg);border-radius:18px;overflow:hidden;position:relative;color:var(--fg);}
+  .screen.land{width:536px;height:240px;}
+  .screen .view{position:absolute;inset:0;display:none;flex-direction:column;}
+  .screen .view.show{display:flex;}
+
+  .statusbar{display:flex;justify-content:space-between;align-items:center;padding:8px 14px 4px;font-size:12px;color:var(--dim);flex:none;}
+  .statusbar .right{display:flex;align-items:center;gap:6px;}
+  .chev{cursor:pointer;font-size:18px;color:var(--dim);line-height:1;}
+  .batt{display:inline-block;width:20px;height:10px;border:1px solid var(--dim);border-radius:2px;position:relative;}
+  .batt::after{content:"";position:absolute;right:-3px;top:2px;width:2px;height:4px;background:var(--dim);border-radius:0 1px 1px 0;}
+  .batt i{position:absolute;left:1px;top:1px;bottom:1px;width:70%;background:#5ad27a;border-radius:1px;}
+
+  /* marquee: long text auto-scrolls when it overflows */
+  .mq{overflow:hidden;white-space:nowrap;} .mq>span{display:inline-block;will-change:transform;}
+  .mq.scroll>span{animation:mq var(--dur,6s) ease-in-out infinite alternate;}
+  @keyframes mq{0%,12%{transform:translateX(0);} 88%,100%{transform:translateX(var(--shift,0));}}
+
+  /* now playing */
+  .np{padding:0 16px;flex:1;}
+  .art{width:208px;height:208px;margin:6px auto 0;border-radius:12px;background:linear-gradient(135deg,#3a2b6e,#b14a8a 55%,#e8743b);box-shadow:0 8px 24px rgba(177,74,138,.35);display:flex;align-items:center;justify-content:center;}
+  .art svg{width:54px;height:54px;opacity:.85;}
+  .track{margin-top:16px;text-align:center;}
+  .track .title{font-size:21px;font-weight:700;line-height:1.2;} .track .title>span{max-width:100%;}
+  .track .artist{font-size:16px;color:var(--dim);margin-top:4px;}
+  .track .album{font-size:13px;color:var(--dim2);margin-top:2px;}
+  .progress{margin-top:14px;} .bar{height:4px;background:#2a2a30;border-radius:2px;overflow:hidden;} .bar i{display:block;height:100%;width:38%;background:var(--accent);border-radius:2px;}
+  .times{display:flex;justify-content:space-between;font-size:11px;color:var(--dim2);margin-top:5px;}
+  .transport{display:flex;align-items:center;justify-content:space-around;margin-top:18px;padding:0 4px;}
+  .transport .iconbtn svg{fill:var(--fg);cursor:pointer;width:34px;height:34px;}
+  .iconbtn{display:flex;align-items:center;justify-content:center;width:60px;height:60px;}
+  .playbtn{width:80px;height:80px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+  .playbtn svg{fill:#000;width:32px;height:32px;}
+  .secondary{display:flex;justify-content:center;gap:46px;margin-top:14px;color:var(--dim);}
+  .secondary svg{width:26px;height:26px;fill:var(--dim);cursor:pointer;} .secondary svg.on{fill:var(--accent);}
+
+  /* now playing landscape */
+  .npland{display:flex;height:100%;padding:16px;gap:16px;align-items:center;position:relative;}
+  .npland .art{width:200px;height:200px;margin:0;flex:none;} .npland .art svg{width:48px;height:48px;}
+  .npland .side{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;}
+  .npland .title{font-size:22px;font-weight:700;} .npland .artist{font-size:15px;color:var(--dim);margin-top:4px;} .npland .album{font-size:12px;color:var(--dim2);margin-top:2px;}
+  .npland .progress{margin-top:16px;} .npland .transport{margin-top:16px;padding:0;justify-content:flex-start;gap:18px;}
+  .npland .playbtn{width:56px;height:56px;} .npland .playbtn svg{width:22px;height:22px;}
+  .npland .lstatus{position:absolute;top:8px;right:14px;font-size:12px;color:var(--dim);display:flex;align-items:center;gap:6px;}
+
+  /* LIBRARY 2x2 tile menu */
+  .libgrid{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:10px;padding:12px;}
+  .tile{background:#16161b;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;}
+  .tile:active{background:#1f1f27;}
+  .tile svg{width:38px;height:38px;fill:var(--accent);}
+  .tile .lbl{font-size:16px;font-weight:600;}
+
+  /* lists */
+  .hdr{padding:8px 12px 8px;font-size:18px;font-weight:700;display:flex;align-items:center;gap:8px;flex:none;}
+  .hdr .back{cursor:pointer;color:var(--dim);font-size:24px;line-height:1;}
+  .list{flex:1;overflow:auto;}
+  .row{display:flex;align-items:center;gap:12px;padding:15px 14px;border-bottom:1px solid #15151a;cursor:pointer;min-height:76px;}
+  .row:active{background:#101015;}
+  .row .thumb{width:46px;height:46px;border-radius:6px;flex:none;background:linear-gradient(135deg,#444,#222);}
+  .row .thumb.a{background:linear-gradient(135deg,#3a2b6e,#b14a8a);} .row .thumb.b{background:linear-gradient(135deg,#1f6e5a,#4ab1a0);} .row .thumb.c{background:linear-gradient(135deg,#6e5a1f,#c9a14a);}
+  .row .num{width:20px;text-align:center;color:var(--dim2);font-size:14px;flex:none;}
+  .row .meta{flex:1;min-width:0;} .row .meta .t{font-size:15px;font-weight:600;} .row .meta .s{font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .row.playing .t{color:var(--accent);}
+
+  /* mini-player */
+  .mini{display:flex;align-items:center;gap:10px;padding:9px 12px;background:#0f0f12;border-top:1px solid #1a1a20;cursor:pointer;flex:none;}
+  .mini .mt2{width:34px;height:34px;border-radius:5px;background:linear-gradient(135deg,#3a2b6e,#b14a8a);flex:none;}
+  .mini .mm{flex:1;min-width:0;} .mini .mm .t{font-size:13px;font-weight:600;} .mini .mm .s{font-size:11px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mini svg{width:26px;height:26px;fill:#fff;flex:none;}
+
+  /* lock */
+  .lock{align-items:center;justify-content:center;text-align:center;}
+  .lock .clock{font-size:48px;font-weight:300;letter-spacing:1px;}
+  .lock .submini{margin-top:6px;font-size:13px;color:var(--dim);}
+  .lock .hint{position:absolute;bottom:22px;left:0;right:0;font-size:12px;color:var(--dim2);}
+  .holdring{width:60px;height:60px;border-radius:50%;border:3px solid var(--dim2);margin:24px auto 0;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .8s linear,transform .1s;}
+  .holdring.holding{border-color:var(--accent);transform:scale(1.05);} .holdring svg{fill:var(--dim);}
+
+  /* fingertip puck (~9 mm = 109 px) */
+  .finger{position:absolute;width:109px;height:109px;border-radius:50%;background:rgba(90,200,250,.22);border:2px solid rgba(90,200,250,.85);transform:translate(-50%,-50%);pointer-events:none;display:none;z-index:60;align-items:center;justify-content:center;font-size:11px;color:#bfeaff;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="panel">
+    <h1>MA-ESPortable · UI prototype</h1>
+    <div class="sub">Navigable 1:1 mock of the ESP32-S3-AMOLED-1.91 (240×536).</div>
+
+    <h2>Jump to</h2>
+    <div class="btnrow" id="screenBtns">
+      <button data-jump="now" class="active">Now Playing</button>
+      <button data-jump="library">Library</button>
+      <button data-jump="queue">Queue</button>
+      <button data-jump="lock">Lock</button>
+    </div>
+
+    <h2>Orientation</h2>
+    <div class="btnrow" id="orientBtns">
+      <button data-orient="port" class="active">Portrait</button>
+      <button data-orient="land">Landscape</button>
+    </div>
+
+    <h2>View</h2>
+    <div class="btnrow" id="viewBtns">
+      <button data-view="2" class="active">Design 2×</button>
+      <button data-view="1">1× (px)</button>
+      <button data-view="phys">Physical 1:1</button>
+    </div>
+
+    <h2>Touch check</h2>
+    <div class="btnrow"><button id="fingerBtn">Show ⌀9 mm fingertip</button></div>
+    <div class="rulercap">Drag it over the UI — anything smaller is fiddly for a finger.</div>
+
+    <label>Calibration (Physical 1:1): <span id="calVal">1.00</span></label>
+    <input type="range" id="cal" min="0.6" max="1.6" step="0.01" value="1.0" />
+    <div class="ruler" id="ruler"></div>
+    <div class="rulercap">↑ make this measure <b>50&nbsp;mm</b> with a real ruler</div>
+
+    <div class="tip"><b>Swipe</b> (or mouse-drag): on Now Playing — up = Library, down = Lock. Elsewhere — down/right = back. Tap a tile → list → album → track. Unlock = hold the ring. (Real device also auto-locks on timeout / power button / pocket.)</div>
+  </div>
+
+  <div class="stage">
+    <div class="device-wrap" id="deviceWrap">
+      <div class="bezel">
+        <div class="screen" id="screen">
+          <div class="finger" id="finger">9mm</div>
+
+          <!-- NOW PLAYING (portrait) -->
+          <div class="view" data-screen="now">
+            <div class="statusbar"><span class="chev" data-go="library">⌄</span><span class="right"><span>Living Room</span><span class="batt"><i></i></span></span></div>
+            <div class="np">
+              <div class="art"><svg viewBox="0 0 24 24"><path fill="#fff" d="M12 3v10.55A4 4 0 1014 17V7h4V3h-6z"/></svg></div>
+              <div class="track">
+                <div class="title mq"><span id="npTitle">Midnight City</span></div>
+                <div class="artist" id="npArtist">M83</div>
+                <div class="album" id="npAlbum">Hurry Up, We're Dreaming</div>
+              </div>
+              <div class="progress"><div class="bar"><i></i></div><div class="times"><span>1:34</span><span>4:03</span></div></div>
+              <div class="transport">
+                <span class="iconbtn"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zM9 12l10 6V6z"/></svg></span>
+                <span class="playbtn" data-toggleplay><svg id="ppIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
+                <span class="iconbtn"><svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM5 18l10-6L5 6z"/></svg></span>
+              </div>
+              <div class="secondary">
+                <svg viewBox="0 0 24 24"><path d="M10.6 9.4 7.9 6.7 9.3 5.3 12 8l2.7-2.7 1.4 1.4L13.4 9.4M3 7l2 2H3m18 0h-2l2-2m-7 6 2.7 2.7-1.4 1.4L14 14.6l-2.7 2.7-1.4-1.4L12.6 13z"/></svg>
+                <svg class="on" viewBox="0 0 24 24"><path d="M9 3v2H5v3H3V3h6m12 0v5h-2V5h-4V3h6M3 16h2v3h4v2H3v-5m18 0v5h-6v-2h4v-3h2z"/></svg>
+                <svg data-jump="lock" viewBox="0 0 24 24"><path d="M12 17a2 2 0 002-2 2 2 0 00-2-2 2 2 0 00-2 2 2 2 0 002 2m6-9a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V10a2 2 0 012-2h1V6a5 5 0 0110 0v2h1M12 3a3 3 0 00-3 3v2h6V6a3 3 0 00-3-3z"/></svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- NOW PLAYING (landscape) -->
+          <div class="view" data-screen="now-land">
+            <div class="npland">
+              <div class="lstatus"><span>Living Room</span><span class="batt"><i></i></span></div>
+              <div class="art"><svg viewBox="0 0 24 24"><path fill="#fff" d="M12 3v10.55A4 4 0 1014 17V7h4V3h-6z"/></svg></div>
+              <div class="side">
+                <div class="title mq"><span id="npTitleL">Midnight City</span></div>
+                <div class="artist" id="npArtistL">M83</div>
+                <div class="album">Hurry Up, We're Dreaming</div>
+                <div class="progress"><div class="bar"><i></i></div><div class="times"><span>1:34</span><span>4:03</span></div></div>
+                <div class="transport">
+                  <span class="iconbtn"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zM9 12l10 6V6z"/></svg></span>
+                  <span class="playbtn" data-toggleplay><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
+                  <span class="iconbtn"><svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM5 18l10-6L5 6z"/></svg></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LIBRARY (2x2 tiles) -->
+          <div class="view" data-screen="library">
+            <div class="statusbar"><span class="chev" data-jump="now">‹ Now Playing</span><span class="right"><span class="batt"><i></i></span></span></div>
+            <div class="libgrid">
+              <div class="tile" data-go="list" data-cat="artists"><svg viewBox="0 0 24 24"><path d="M12 12a5 5 0 10-5-5 5 5 0 005 5m0 2c-3.3 0-10 1.7-10 5v3h20v-3c0-3.3-6.7-5-10-5z"/></svg><div class="lbl">Artists</div></div>
+              <div class="tile" data-go="list" data-cat="albums"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1010 10A10 10 0 0012 2m0 13a3 3 0 113-3 3 3 0 01-3 3m0-4a1 1 0 101 1 1 1 0 00-1-1z"/></svg><div class="lbl">Albums</div></div>
+              <div class="tile" data-go="list" data-cat="playlists"><svg viewBox="0 0 24 24"><path d="M3 6h12v2H3zm0 4h12v2H3zm0 4h8v2H3zm12 .5V21l5-3z"/></svg><div class="lbl">Playlists</div></div>
+              <div class="tile" data-jump="queue"><svg viewBox="0 0 24 24"><path d="M3 6h14v2H3zm0 4h14v2H3zm0 4h10v2H3zm14-1 5 3-5 3z"/></svg><div class="lbl">Queue</div></div>
+            </div>
+          </div>
+
+          <!-- LIST (a chosen category) -->
+          <div class="view" data-screen="list">
+            <div class="hdr"><span class="back" data-back>‹</span><span id="listTitle">Albums</span></div>
+            <div class="list" id="catList"></div>
+            <div class="mini" data-jump="now"><div class="mt2"></div><div class="mm"><div class="t mq"><span id="miniT1">Midnight City</span></div><div class="s" id="miniS1">M83</div></div><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+          </div>
+
+          <!-- ALBUM (track list) -->
+          <div class="view" data-screen="album">
+            <div class="hdr"><span class="back" data-back>‹</span><span id="albumTitle">Album</span></div>
+            <div class="list" id="albumList"></div>
+            <div class="mini" data-jump="now"><div class="mt2"></div><div class="mm"><div class="t mq"><span id="miniT2">Midnight City</span></div><div class="s" id="miniS2">M83</div></div><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+          </div>
+
+          <!-- QUEUE -->
+          <div class="view" data-screen="queue">
+            <div class="hdr"><span class="back" data-jump="library">‹</span><span>Up Next</span></div>
+            <div class="list" id="queueList"></div>
+          </div>
+
+          <!-- LOCK -->
+          <div class="view lock" data-screen="lock">
+            <div class="statusbar" style="position:absolute;top:0;left:0;right:0"><span id="lockTime2">9:41</span><span class="right"><span class="batt"><i></i></span></span></div>
+            <div class="clock" id="lockClock">9:41</div>
+            <div class="submini" id="lockNow">Midnight City · M83</div>
+            <div class="holdring" id="holdring"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M12 17a2 2 0 002-2 2 2 0 00-2-2 2 2 0 00-2 2 2 2 0 002 2m6-9a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V10a2 2 0 012-2h1V6a5 5 0 0110 0v2h1M12 3a3 3 0 00-3 3v2h6V6a3 3 0 00-3-3z"/></svg></div>
+            <div class="hint">lift wakes the screen · hold ring to unlock</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const DISPLAY_PPI=307.5, MONITOR_PPI=225;
+  const wrap=document.getElementById('deviceWrap');
+  const scr=document.getElementById('screen');
+
+  const albums=[
+    {t:"Hurry Up, We're Dreaming",a:"M83",y:2011,c:'a'},{t:"In Rainbows",a:"Radiohead",y:2007,c:'b'},
+    {t:"Random Access Memories",a:"Daft Punk",y:2013,c:'c'},{t:"Discovery",a:"Daft Punk",y:2001,c:'a'},
+    {t:"A Moon Shaped Pool",a:"Radiohead",y:2016,c:'b'},{t:"Currents",a:"Tame Impala",y:2015,c:'c'},
+    {t:"Settle",a:"Disclosure",y:2013,c:'a'},
+  ];
+  const artists=["M83","Radiohead","Daft Punk","Tame Impala","Disclosure","Bonobo","ODESZA"];
+  const playlists=["Late Night Drive Mix","Focus Flow","Workout","Discover Weekly","Chill Vibes","Road Trip Anthems"];
+  const queue=[{t:"Midnight City",a:"M83"},{t:"Reunion",a:"M83"},{t:"Wait",a:"M83"},{t:"Nightcall",a:"Kavinsky"},{t:"Instant Crush (feat. Julian Casablancas)",a:"Daft Punk"},{t:"The Less I Know The Better",a:"Tame Impala"}];
+  const albumTracks=["Intro","Midnight City","Reunion","Wait","Raconte-Moi Une Histoire","Train to Pluton","Claudia Lewis"];
+
+  const mq=s=>'<div class="t mq"><span>'+s+'</span></div>';
+  function row(html,attrs){ return '<div class="row" '+(attrs||'')+'>'+html+'</div>'; }
+  function renderList(cat){
+    document.getElementById('listTitle').textContent={artists:'Artists',albums:'Albums',playlists:'Playlists'}[cat];
+    let h='';
+    if(cat==='albums') albums.forEach(al=>h+=row('<div class="thumb '+al.c+'"></div><div class="meta">'+mq(al.t)+'<div class="s">'+al.a+' · '+al.y+'</div></div>','data-album="'+al.t+'" data-artist="'+al.a+'" data-go="album"'));
+    else if(cat==='artists') artists.forEach(a=>h+=row('<div class="thumb b"></div><div class="meta">'+mq(a)+'<div class="s">Artist</div></div>','data-album="'+a+'" data-artist="'+a+'" data-go="album"'));
+    else playlists.forEach(p=>h+=row('<div class="thumb c"></div><div class="meta">'+mq(p)+'<div class="s">Playlist</div></div>','data-album="'+p+'" data-artist="Various" data-go="album"'));
+    document.getElementById('catList').innerHTML=h;
+  }
+  function renderAlbum(title,artist){
+    document.getElementById('albumTitle').textContent=title;
+    let h=''; albumTracks.forEach((t,i)=>h+=row('<div class="num">'+(i+1)+'</div><div class="meta">'+mq(t)+'<div class="s">'+artist+'</div></div>','data-track="'+t+'" data-artist="'+artist+'" data-play'));
+    document.getElementById('albumList').innerHTML=h;
+  }
+  function renderQueue(){
+    let h=''; queue.forEach((q,i)=>{ const cls=i===0?' playing':''; h+='<div class="row'+cls+'" data-track="'+q.t+'" data-artist="'+q.a+'" data-play><div class="num">'+(i===0?'▶':i+1)+'</div><div class="meta">'+mq(q.t)+'<div class="s">'+q.a+'</div></div></div>'; });
+    document.getElementById('queueList').innerHTML=h;
+  }
+
+  function applyMarquee(){
+    scr.querySelectorAll('.view.show .mq').forEach(m=>{ const s=m.firstElementChild; const over=s.scrollWidth-m.clientWidth;
+      if(over>2){ m.classList.add('scroll'); s.style.setProperty('--shift',(-over-6)+'px'); s.style.setProperty('--dur',Math.max(5,(over+6)/14)+'s'); }
+      else { m.classList.remove('scroll'); s.style.removeProperty('--shift'); } });
+  }
+
+  let stack=['now'], orient='port', playing=true, currentScale=2;
+  function go(n){ if(stack[stack.length-1]!==n) stack.push(n); render(); }
+  function back(){ if(stack.length>1) stack.pop(); render(); }
+  function jump(n){ stack=[n]; render(); }
+  function setNow(t,a){ playing=true;
+    ['npTitle','npTitleL','miniT1','miniT2'].forEach(id=>document.getElementById(id).textContent=t);
+    ['npArtist','npArtistL','miniS1','miniS2'].forEach(id=>document.getElementById(id).textContent=a);
+    document.getElementById('lockNow').textContent=t+' · '+a; updatePlay();
+  }
+  function updatePlay(){ document.getElementById('ppIcon').innerHTML=playing?'<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>':'<path d="M8 5v14l11-7z"/>'; }
+  function render(){
+    const top=orient==='land'?'now-land':stack[stack.length-1];
+    scr.classList.toggle('land',orient==='land');
+    scr.querySelectorAll('.view').forEach(v=>v.classList.toggle('show',v.dataset.screen===top));
+    const map={now:'now','now-land':'now',library:'library',list:'library',album:'library',queue:'queue',lock:'lock'};
+    document.querySelectorAll('#screenBtns button').forEach(b=>b.classList.toggle('active',b.dataset.jump===map[top]));
+    applyMarquee();
+  }
+
+  scr.addEventListener('click',e=>{
+    if(swiped){ swiped=false; return; }
+    const go_=e.target.closest('[data-go]'),back_=e.target.closest('[data-back]'),jump_=e.target.closest('[data-jump]'),play_=e.target.closest('[data-play]'),tp_=e.target.closest('[data-toggleplay]');
+    if(tp_){ playing=!playing; updatePlay(); return; }
+    if(play_){ setNow(play_.dataset.track,play_.dataset.artist); stack=['now']; render(); return; }
+    if(go_){ const n=go_.dataset.go; if(n==='list') renderList(go_.dataset.cat); if(n==='album') renderAlbum(go_.dataset.album,go_.dataset.artist); go(n); return; }
+    if(back_){ back(); return; }
+    if(jump_){ const n=jump_.dataset.jump; if(n==='queue') renderQueue(); jump(n); return; }
+  });
+
+  /* swipe nav */
+  let sx=0,sy=0,swiped=false;
+  scr.addEventListener('pointerdown',e=>{ sx=e.clientX; sy=e.clientY; swiped=false; });
+  scr.addEventListener('pointerup',e=>{
+    const dx=e.clientX-sx, dy=e.clientY-sy; if(Math.hypot(dx,dy)<22) return; swiped=true;
+    const top=stack[stack.length-1];
+    if(Math.abs(dx)>Math.abs(dy)){ if(dx>0 && top!=='now') back(); }
+    else { if(dy<0){ if(top==='now') go('library'); }                 // swipe up = Library
+           else { if(top==='now') jump('lock'); else if(top!=='lock') back(); } }  // swipe down on Now = lock; else back
+  });
+
+  /* hold-to-unlock */
+  const ring=document.getElementById('holdring'); let ht;
+  ring.addEventListener('pointerdown',()=>{ ring.classList.add('holding'); ht=setTimeout(()=>{ ring.classList.remove('holding'); jump('now'); },800); });
+  function endHold(){ ring.classList.remove('holding'); clearTimeout(ht); }
+  ring.addEventListener('pointerup',endHold); ring.addEventListener('pointerleave',endHold);
+
+  /* panel */
+  document.querySelectorAll('#screenBtns button').forEach(b=>b.onclick=()=>{ const n=b.dataset.jump; if(n==='queue')renderQueue(); jump(n); });
+  document.querySelectorAll('#orientBtns button').forEach(b=>b.onclick=()=>{ document.querySelectorAll('#orientBtns button').forEach(x=>x.classList.remove('active')); b.classList.add('active'); orient=b.dataset.orient; render(); });
+  document.querySelectorAll('#viewBtns button').forEach(b=>b.onclick=()=>{ document.querySelectorAll('#viewBtns button').forEach(x=>x.classList.remove('active')); b.classList.add('active'); viewMode=b.dataset.view; applyView(); });
+
+  let viewMode='2', calib=1.0;
+  function applyView(){ let s; if(viewMode==='phys'){const dpr=window.devicePixelRatio||1; s=(MONITOR_PPI/DISPLAY_PPI)/dpr*calib;} else s=parseFloat(viewMode); currentScale=s; wrap.style.transform='scale('+s+')'; applyMarquee(); }
+  function applyRuler(){ const dpr=window.devicePixelRatio||1; const px=(MONITOR_PPI/25.4)/dpr*calib; document.getElementById('ruler').style.width=(50*px)+'px'; }
+  document.getElementById('cal').oninput=function(){ calib=parseFloat(this.value); document.getElementById('calVal').textContent=calib.toFixed(2); applyView(); applyRuler(); };
+
+  let fingerOn=false; const fingerEl=document.getElementById('finger');
+  document.getElementById('fingerBtn').onclick=function(){ fingerOn=!fingerOn; this.classList.toggle('active',fingerOn); this.textContent=fingerOn?'Hide ⌀9 mm fingertip':'Show ⌀9 mm fingertip'; fingerEl.style.display=fingerOn?'flex':'none'; };
+  scr.addEventListener('pointermove',e=>{ if(!fingerOn)return; const r=scr.getBoundingClientRect(); fingerEl.style.left=((e.clientX-r.left)/currentScale)+'px'; fingerEl.style.top=((e.clientY-r.top)/currentScale)+'px'; });
+
+  function tick(){ const d=new Date(),h=d.getHours(),m=d.getMinutes().toString().padStart(2,'0'),t=h+':'+m; ['lockClock','lockTime2'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=t;}); }
+  setInterval(tick,10000); tick();
+
+  renderList('albums'); renderQueue(); applyView(); applyRuler(); render();
+</script>
+</body>
+</html>
