@@ -35,21 +35,34 @@ rather than stored locally.
 
 ## Key features (target)
 
-- Pocket-sized, battery-powered (**10+ hour** runtime target).
-- **AMOLED** touchscreen — minimalist glass slab, no face buttons (maybe just power).
-- Streams from Music Assistant over WiFi (Sendspin protocol) to **wired headphones**.
-- **Now-playing** display: title / artist / album / album art / scrubbing progress.
-- **Transport control**: play / pause / next / previous / volume / mute / shuffle / repeat,
-  plus room/group switching.
-- **Library browse / search / queue** (stretch — via Music Assistant's API; see Software below).
-- **Three ways to control it:**
-  1. Touchscreen
-  2. **Wired-headphone inline remote** (play/vol/skip from the cable — no need to take it out of
-     your pocket)
-  3. **IMU wake-on-pickup** (it knows when you lift it)
-- Screen sleep + **touch lockout** + **hold-to-unlock** (kills pocket mis-taps, saves the most
-  power).
-- **Haptic** feedback. **USB-C** charge / data / **USB-DAC mode**. **CNC-aluminum** body (v2).
+Triaged into what makes it *work*, what makes it *polished*, and *stretch*. The first working
+version's polish level is decided by **what the spike teaches** (can the S3 carry LVGL + WiFi +
+audio + a taste of the UI). All four "optional" features below are **confirmed in scope.**
+
+**🟢 MVP — first light (the minimum useful device):**
+- Play synced audio from MA (Sendspin `player`; FLAC/PCM, deep buffer) → wired headphones.
+- Now-playing screen (Sendspin `metadata`): title / artist / album / progress.
+- Basic transport (Sendspin `controller`): play / pause / next / prev / volume / mute.
+- Touch UI (LVGL on the 240×536 bar); WiFi connect; NVS persistence (volume, settings, last server).
+
+**🔵 v1 — feels like a product:**
+- Album art (Sendspin `artwork`); shuffle / repeat; room/group switch.
+- **Headphone inline-remote** control (TRRS + ADC decode + "learn my remote") — *in scope*.
+- **IMU wake-on-pickup**; screen sleep / touch-lockout / hold-to-unlock; **haptic** feedback.
+- Battery + charging indicator; settings screen (name, brightness, sleep timeout, static-delay,
+  remote calibration); boot splash; dark theme.
+- Captive-portal WiFi provisioning; **OTA** over WiFi; pop/mute suppression; `/status`; multi-server
+  handling. *(Most of this is proven predecessor code we carry over.)*
+
+**🟣 Stretch / committed-but-later:**
+- **Library browse / search / queue** (Tier 2 — MA WebSocket API) — *in scope*; can't come first
+  (must play before you can browse-and-play), but it's a committed goal, not a maybe.
+- **USB-DAC mode** (act as a PC sound card) — *in scope*.
+- **Web flasher** (GitHub Pages WebSerial) for toolchain-free install + distribution — *in scope*.
+- 24-bit audio path; EQ/DSP; sleep timer; multiple saved WiFi networks.
+
+Physical: minimalist AMOLED glass slab, no face buttons (maybe just power); resin-printed v1 →
+CNC-aluminum v2 (u.FL external antenna makes the metal body viable).
 
 ## Hardware direction
 
