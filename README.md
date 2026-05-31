@@ -184,6 +184,20 @@ minimalist slab needs no face buttons.
   variance; ESD diodes on the jack; jack-detect so sense is only active when plugged; graceful
   fallback to touch-only for plain (no-remote) headphones.
 
+**Design specifics:**
+- **Divider:** Vref 3.3 V, **Rbias ≈ 2.2 kΩ** → bands: center ~0 V, Vol+ ~0.33 V, Vol− ~0.58 V,
+  no-press ~1.65 V (with mic) / 3.3 V (open). RC filter (~1 kΩ + 100 nF) into the ADC for
+  debounce. Drop Rbias to ~1 kΩ if Vol+/Vol− need wider separation.
+- ⚠️ **Must use an ADC1 pin (GPIO1–10)** — the S3's **ADC2 is unusable while WiFi is on**, and WiFi
+  is always on. Pick a free ADC1 channel off the 1.91 header at pinout time.
+- **ESD array** on the jack; keep L/R ESD caps <10 pF so they don't roll off treble.
+- **CTIA only** (modern standard); OMTP just won't sense (calibration detects + warns). No
+  auto-switch IC — not worth it for a personal device.
+- **Jack-detect contact → GPIO** gives **auto-pause on unplug** / resume on re-plug, "headphones
+  connected" UI state, and power savings (sense only when plugged).
+- **Firmware:** oversample (~16–64 avg) → classify to calibrated band midpoints → ~30 ms debounce →
+  events, with press-and-hold repeat for volume and an optional long-press mapping (seek/next).
+
 ## Software architecture
 
 Built incrementally, but architected for the full vision from the start.
