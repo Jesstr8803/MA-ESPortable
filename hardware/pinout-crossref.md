@@ -1,67 +1,63 @@
-# ESP32-S3-AMOLED-1.91 — GPIO cross-reference checklist
+# ESP32-S3-AMOLED-1.91 — GPIO cross-reference
 
-Every ESP32-S3 GPIO vs. what the Waveshare **demo source** says it does, with a column to confirm
-against the **schematic / board in hand**. Demo source:
-[waveshareteam/ESP32-S3-AMOLED-1.91](https://github.com/waveshareteam/ESP32-S3-AMOLED-1.91)
-(`02_Example/Arduino/`: `03_LVGL_V8_Test.ino`, `02_I2C_QMI8658/i2c_bsp.cpp`,
-`04_SD_Card/sd_card_bsp.cpp`, `01_ADC_Test/adc_bsp.cpp`).
+**VERIFIED from the board schematic** (`hardware/reference/ESP32-S3-AMOLED-1.91.pdf`, legend table),
+extracted with coordinates so column assignments are reliable. This supersedes the earlier
+demo-source guesses.
 
-> ⚠️ Demo files are inconsistent — treat as strong-but-unconfirmed until checked against the board.
-
-| GPIO | Demo says | Category | Free for carrier? | ADC1? | Confirmed? |
-|---|---|---|---|---|---|
-| 0 | BOOT button | Reserved (our button) | no | — | [ ] |
-| 1 | Battery sense | Used (ADC) | no | yes | [ ] |
-| 2 | — | FREE | yes | yes | [ ] |
-| 3 | — | FREE | yes | yes | [ ] |
-| 4 | — | FREE | yes | yes | [ ] |
-| 5 | AMOLED D3 | Used (display) | no | yes | [ ] |
-| 6 | AMOLED CS | Used (display) | no | yes | [ ] |
-| 7 | AMOLED D1 | Used (display) | no | yes | [ ] |
-| 8 | microSD D0/MISO | Used (SD) † | no* | yes | [ ] |
-| 9 | microSD CLK/CS | Used (SD) † | no* | yes | [ ] |
-| 10 | — | FREE | yes | yes | [ ] |
-| 11 | — | FREE | yes | no | [ ] |
-| 12 | — | FREE | yes | no | [ ] |
-| 13 | — | FREE | yes | no | [ ] |
-| 14 | — | FREE | yes | no | [ ] |
-| 15 | — | FREE | yes | no | [ ] |
-| 16 | — | FREE | yes | no | [ ] |
-| 17 | AMOLED RST | Used (display) | no | no | [ ] |
-| 18 | AMOLED D0 | Used (display) | no | no | [ ] |
-| 19 | USB D− | Reserved (USB) | no | no | [ ] |
-| 20 | USB D+ | Reserved (USB) | no | no | [ ] |
-| 21 | — | FREE | yes | no | [ ] |
-| 22–25 | (do not exist on S3) | N/A | — | — | — |
-| 26–32 | SPI flash | Reserved | no | no | [ ] |
-| 33–37 | Octal PSRAM | Reserved | no | no | [ ] |
-| 38 | — | FREE | yes | no | [ ] |
-| 39 | I²C SCL | Used (touch+IMU) | shared ‡ | no | [ ] |
-| 40 | I²C SDA | Used (touch+IMU) | shared ‡ | no | [ ] |
-| 41 | — | FREE | yes | no | [ ] |
-| 42 | microSD CMD/MOSI | Used (SD) † | no* | no | [ ] |
-| 43 | UART0 TX | Reserved (console) | no | no | [ ] |
-| 44 | UART0 RX | Reserved (console) | no | no | [ ] |
-| 45 | — | FREE | yes | no | [ ] |
-| 46 | — | FREE | yes | no | [ ] |
-| 47 | AMOLED PCLK | Used (display) | no | no | [ ] |
-| 48 | AMOLED D2 | Used (display) | no | no | [ ] |
+| GPIO | Schematic function | Category | Free for carrier? | ADC1? |
+|---|---|---|---|---|
+| 0 | BOOT button | Reserved (our button) | no | — |
+| 1 | BAT_ADC (battery sense) | Used | no | yes |
+| 2 | — | **FREE** | yes | **yes** |
+| 3 | — | **FREE** | yes | **yes** |
+| 4 | — | **FREE** | yes | **yes** |
+| 5 | AMOLED DB1 | Used (display) | no | yes |
+| 6 | AMOLED CS | Used (display) | no | yes |
+| 7 | AMOLED DCX_RS | Used (display) | no | yes |
+| 8 | AMOLED SDO **+ SD_MISO** | Used (display/SD muxed) | no | yes |
+| 9 | AMOLED TE **+ SD_CS** | Used (display/SD muxed) | no | yes |
+| 10 | — | **FREE** | yes | **yes** |
+| 11 | — | **FREE** | yes | no |
+| 12 | — | **FREE** | yes | no |
+| 13 | — | **FREE** | yes | no |
+| 14 | — | **FREE** | yes | no |
+| 15 | — | **FREE** | yes | no |
+| 16 | — | **FREE** | yes | no |
+| 17 | AMOLED RESET | Used (display) | no | no |
+| 18 | AMOLED RD_SDI | Used (display) | no | no |
+| 19 | USB D− | Reserved (USB) | no | no |
+| 20 | USB D+ | Reserved (USB) | no | no |
+| 21 | — | **FREE** | yes | no |
+| 22–25 | (do not exist on S3) | N/A | — | — |
+| 26, 33–37 | SPI flash + octal PSRAM | Reserved | no | no |
+| 38 | — | **FREE** | yes | no |
+| 39 | TP_SCL **+ IMU_SCL** | Used (shared I²C ‡) | shared | no |
+| 40 | TP_SDA **+ IMU_SDA** | Used (shared I²C ‡) | shared | no |
+| 41 | AMOLED TP_INT (touch interrupt) | Used | no | no |
+| 42 | SD_MOSI | Used (SD) † | (no*) | no |
+| 43 | U0TXD | Reserved (console) | no | no |
+| 44 | U0RXD | Reserved (console) | no | no |
+| 45 | IMU_INT1 | Used (IMU) | no | no |
+| 46 | IMU_INT2 | Used (IMU) | no | no |
+| 47 | AMOLED WRX_SCL **+ SD_CLK** | Used (display/SD muxed) | no | no |
+| 48 | AMOLED DB0 | Used (display) | no | no |
 
 **Legend / notes**
-- **†** SD pins (8, 9, 42). **\*** = freed if microSD is left unpopulated (we don't need it — audio is
-  over WiFi). Dropping SD frees **8 & 9 (both ADC1)** + 42.
-- **‡** I²C (39/40) is *shared*, not blocked — the carrier's CS43131 / DRV2605L / MAX17048 join this
-  same bus (that's the plan).
+- **‡** I²C bus = **SDA 40 / SCL 39** (note the order), shared by the touch (FT3168) and IMU
+  (QMI8658). Our carrier's CS43131 / DRV2605L / MAX17048 join this same bus — that's the plan.
+- **IMU is on I²C** (39/40) with interrupts on 45/46. (The demo's `QMI8658_USE_SPI` define is a
+  red herring; the schematic wires it I²C.)
+- **†/*** SD is **muxed with the display** (SD_MISO=8, SD_CS=9, SD_CLK=47 are shared AMOLED pins;
+  only SD_MOSI=42 is SD-exclusive). So **not** using microSD frees **only GPIO42** — not 8/9/47.
 
-**Free GPIOs (demo):** 2, 3, 4, 10, 11, 12, 13, 14, 15, 16, 21, 38, 41, 45, 46  (+ 8, 9, 42 if SD unused).
-**ADC1-capable free:** 2, 3, 4, 10  (+ 8, 9 if SD unused).
+**Genuinely FREE GPIOs:** **2, 3, 4, 10, 11, 12, 13, 14, 15, 16, 21, 38** (+ **42** if microSD unused).
+**ADC1-capable free (for remote-sense):** **2, 3, 4, 10**.
+That's 12 free pins — plenty for I²S(4) + remote-sense ADC(1) + jack-detect(1) + haptic-EN(1) +
+gauge-ALRT(1) = 8.
 
-## Specifically verify against the schematic
-- [ ] **SD vs display overlap** — the SD demo's SPI mode uses CLK=47, which is also the LCD PCLK. How is SD actually wired (SDMMC-only? muxed?).
-- [ ] **QMI8658 bus** — example folder is `02_I2C_QMI8658` (I²C, addr 0x6A/0x6B) but `qmi8658c.h` has `#define QMI8658_USE_SPI`. Confirm it's on the I²C bus (39/40).
-- [ ] **Touch INT/RST and IMU INT** pins — not present in the demo files pulled.
-- [ ] **Header breakout** — confirm each "FREE" GPIO is actually exposed on the 2×20 headers.
-- [ ] **Battery sense (GPIO1)** — confirm it's the LiPo divider, not just a test pad.
+## Still to confirm on the physical board
+- [ ] Each FREE GPIO is actually broken out on the 2×20 headers (vs. only on internal pads).
+- [ ] The physical header pin positions (fill the map below from the wiki pinout image / silkscreen).
 
 ## Physical 2×20 header map — TO FILL IN FROM THE BOARD
 
