@@ -14,3 +14,8 @@ sdkconfig.old
 Thumbs.db
 .DS_Store
 .vscode/
+
+# Reference material — large/redistribution-iffy datasheets, diagrams, photos.
+# Keep the folder's README tracked; ignore the dropped binaries.
+hardware/reference/*
+!hardware/reference/README.md

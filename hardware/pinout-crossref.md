@@ -63,6 +63,42 @@ against the **schematic / board in hand**. Demo source:
 - [ ] **Header breakout** — confirm each "FREE" GPIO is actually exposed on the 2×20 headers.
 - [ ] **Battery sense (GPIO1)** — confirm it's the LiPo divider, not just a test pad.
 
+## Physical 2×20 header map — TO FILL IN FROM THE BOARD
+
+> The header pin *positions* (which pad each GPIO sits on) are only in Waveshare's pinout **image** /
+> schematic, which I couldn't fetch. Fill these from the board silkscreen or the wiki pinout diagram.
+> The board is "Pico-header compatible" (two 1×20 rows, 2.54 mm pitch).
+
+**Header 1 (left row)**
+
+| Hdr pin | Silkscreen / GPIO | Hdr pin | Silkscreen / GPIO |
+|---|---|---|---|
+| 1 |  | 2 |  |
+| 3 |  | 4 |  |
+| 5 |  | 6 |  |
+| 7 |  | 8 |  |
+| 9 |  | 10 |  |
+| 11 |  | 12 |  |
+| 13 |  | 14 |  |
+| 15 |  | 16 |  |
+| 17 |  | 18 |  |
+| 19 |  | 20 |  |
+
+**Header 2 (right row)**
+
+| Hdr pin | Silkscreen / GPIO | Hdr pin | Silkscreen / GPIO |
+|---|---|---|---|
+| 1 |  | 2 |  |
+| 3 |  | 4 |  |
+| 5 |  | 6 |  |
+| 7 |  | 8 |  |
+| 9 |  | 10 |  |
+| 11 |  | 12 |  |
+| 13 |  | 14 |  |
+| 15 |  | 16 |  |
+| 17 |  | 18 |  |
+| 19 |  | 20 |  |
+
 ## Tentative carrier assignment (fill in once confirmed)
 | Carrier signal | Proposed GPIO | Confirmed GPIO |
 |---|---|---|
