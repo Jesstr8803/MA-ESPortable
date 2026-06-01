@@ -78,35 +78,39 @@ CELL ──[DW01A + Q1 protection]── VBAT ──┬──► board MX1.25 ba
 **TRRS jack:** L/R/GND as above; **MIC line** → R_bias 2.2 k to 3.3 V + RC (1 k/100 nF) → ADC1; plus
 DNP AC-tap for future voice; ESD array on all four lines; **detect switch** → GPIO.
 
-## Board pin usage — VERIFIED from the official demo source
+## Board pin usage — from the official demo source
 
-Source: [waveshareteam/ESP32-S3-AMOLED-1.91](https://github.com/waveshareteam/ESP32-S3-AMOLED-1.91)
-`02_Example/Arduino/` — `03_LVGL_V8_Test.ino`, `02_I2C_QMI8658/i2c_bsp.h`, `01_ADC_Test/adc_bsp.cpp`.
-(Display driver is **SH8601-class** QSPI.)
+Read from [waveshareteam/ESP32-S3-AMOLED-1.91](https://github.com/waveshareteam/ESP32-S3-AMOLED-1.91)
+`02_Example/Arduino/` (`03_LVGL_V8_Test.ino`, `02_I2C_QMI8658/i2c_bsp.cpp`, `01_ADC_Test/adc_bsp.cpp`).
+Display driver **SH8601-class** QSPI.
+
+> ⚠️ **Treat as strong-but-unconfirmed.** Waveshare's example files are inconsistent between demos, so
+> these are the best source values but the **final authority is the board schematic / the board in
+> hand**. Confirm every number (and that each pin is broken out on the 2×20 header) before fab.
 
 **Used by the board — do not reuse:**
-- **AMOLED QSPI:** CS=**6**, PCLK=**47**, D0=**18**, D1=**7**, D2=**48**, D3=**5**, RST=**17** (no backlight pin; TE unused)
-- **I²C (touch FT3168 + IMU QMI8658), I2C_NUM_0:** SDA=**15**, SCL=**14**
-- **Battery voltage sense:** **GPIO1** (ADC1_CH0) — the board's ADC demo reads this *(confirm it's the LiPo divider)*
+- **AMOLED QSPI:** CS=**6**, PCLK=**47**, D0=**18**, D1=**7**, D2=**48**, D3=**5**, RST=**17** (no backlight pin)
+- **I²C (touch FT3168 + IMU QMI8658), I2C_NUM_0:** SDA=**40**, SCL=**39**
+- **Battery voltage sense:** **GPIO1** (ADC1_CH0) — the ADC demo reads this *(confirm it's the LiPo divider)*
 - **Reserved by silicon:** **26–37** (SPI flash + octal PSRAM), **0** (BOOT/our button), **19/20** (USB), **43/44** (UART0)
 
-**Free ADC1-capable (GPIO1–10, ADC2 unusable with WiFi):** **2, 3, 4, 8, 9, 10** (1=batt, 5/6/7 = LCD).
-**Free digital:** **11, 12, 13, 16, 21, 38, 39, 40, 41, 42, 45, 46** (40 may be an RGB LED — confirm).
-Plenty of headroom. *(Confirm each is broken out on the 2×20 header when the board is in hand.)*
+**Free ADC1-capable (GPIO1–10; ADC2 unusable with WiFi):** **2, 3, 4, 8, 9, 10** (1=batt, 5/6/7=LCD).
+**Free digital:** **13, 14, 15, 16, 21, 38, 41, 42, 45, 46** (+ any unused ADC1 pins).
+Plenty of headroom. *(All subject to the header-breakout + schematic confirmation above.)*
 
-## ESP32 header pins — carrier assignment *(tentative, from the verified free set)*
+## ESP32 header pins — carrier assignment *(tentative)*
 
 | Signal | GPIO | Constraint / notes |
 |---|---|---|
-| I²S MCLK | 38 | mandatory; via U6 level shifter |
-| I²S BCLK | 39 | via U6 |
-| I²S LRCK | 41 | via U6 |
-| I²S SDOUT (→DAC SDIN) | 42 | via U6 |
-| I²C SDA / SCL | **15 / 14** | board's shared bus; +DRV2605L/MAX17048; +PCA9306→CS43131 |
+| I²S MCLK | 41 | mandatory; via U6 level shifter |
+| I²S BCLK | 42 | via U6 |
+| I²S LRCK | 45 | via U6 |
+| I²S SDOUT (→DAC SDIN) | 46 | via U6 |
+| I²C SDA / SCL | **40 / 39** | board's shared bus; +DRV2605L/MAX17048; +PCA9306→CS43131 |
 | **Remote-sense ADC** | **2** (ADC1_CH1) | **must be ADC1** (ADC2 dead w/ WiFi) |
 | Jack-detect | 16 | TRRS detect switch → auto-pause on unplug |
-| DRV2605L EN | 45 | optional (or tie high) |
-| MAX17048 ALRT | 46 | optional low-battery interrupt |
+| DRV2605L EN | 38 | optional (or tie high) |
+| MAX17048 ALRT | 21 | optional low-battery interrupt |
 | Future mic ADC | 3 (ADC1_CH2) | reserved (DNP) |
 | 3V3 / GND | power | from header |
 | VBAT | carrier-internal | cell → protection (not from header) |
