@@ -8,6 +8,16 @@ protection, and the headphone jack + inline-remote sense.
 > Exact ESP32 GPIO numbers are marked *(confirm from board)* until verified against the board's
 > demo pin map / schematic.
 
+## Build philosophy: design to full spec, populate selectively
+
+The PCB is designed and routed for **every** feature; parts we don't need for a given build are
+left as **unpopulated footprints (DNP)**. A bare board costs the same regardless, and a basic build
+can be upgraded to full spec later with just a soldering iron — no respin. Optional/DNP candidates:
+- **DW01A + FS8205A** protection — omit if using a protected pouch (populate for a bare cell)
+- **MAX17048** fuel gauge — omit and use the board's GPIO1 battery ADC for a basic % readout
+- **MEMS mic + headset-mic AC tap** — future voice; footprints only
+- Anything else marked *(opt)* / *(DNP)* in the BOM
+
 ## Design decisions driving the BOM
 
 - **DAC + headphone amp: Cirrus CS43131** (130 dB DR, ground-centered Class-H, drives IEMs→600 Ω).
