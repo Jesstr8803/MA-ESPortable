@@ -33,18 +33,28 @@ battery for pure polish, adds an enclosure mounting constraint.)*
   pump gives a negative rail; L/R swing around true GND). No DC-blocking caps in the L/R path, and
   it's compatible with the system-ground-referenced mic-sense divider.
 
-## Bill of materials — ICs
+## Bill of materials — ICs & connectors
 
-| Ref | Part | Function | Pkg | LCSC |
+All sourced on LCSC (→ JLCPCB-assemblable). Ordering codes confirmed 2026-05-31.
+
+| Ref | Part (order code) | Function | Pkg | LCSC |
 |---|---|---|---|---|
-| U1 | **CS43131** | DAC + ground-centered headphone amp | QFN-40 5×5 | C1554754 / C1554759 |
-| U3 | **MAX17048** | Battery fuel gauge (ModelGauge), I²C | — | C2682616 |
-| U4 | **LT3042** | Ultra-low-noise LDO → 1.8 V audio rail | DFN | C666568 |
-| U5 | *(opt)* DW01A | 1-cell protection — **omit if pouch is protected** | SOT-23-6 | C700964 |
-| Q1 | *(opt)* FS8205A | Dual N-MOSFET for protection (with U5) | SOT-23-6 | *(confirm)* |
-| U6 | **SN74AXC4T245** | 4-bit level shifter (I²S) | — | *(confirm)* |
-| U7 | **PCA9306** | I²C voltage translator | — | *(confirm)* |
+| U1 | **CS43131-CNZ / -CWZR** | DAC + ground-centered headphone amp | QFN-40 5×5 | C1554759 / C1554754 |
+| U3 | **MAX17048G+T10** | Battery fuel gauge (ModelGauge), I²C | TDFN | **C2682616** |
+| U4 | **LT3042IDD#TRPBF** (genuine ADI) | Ultra-low-noise LDO → 1.8 V audio rail | DFN-10 3×3 | **C666568** |
+| U6 | **SN74AXC4T245PWR** (TI) | 4-bit level shifter (I²S), 3.3↔1.8 V | TSSOP-16 | **C2867798** |
+| U7 | **PCA9306DCTR** (TI) | I²C voltage translator (CS43131) | SM-8 | **C123752** |
+| Q1 | *(opt)* **FS8205A** | Dual N-MOSFET protection (with U5) | SOT-23-6 | **C2830320** |
+| U5 | *(opt)* **DW01A** | 1-cell protection — **omit if pouch is protected** | SOT-23-6 | C700964 |
+| J1 | **PJ-320A-4P** (SHOU HAN) | 3.5 mm **TRRS** jack (4-pole) | DIP | **C18185602** |
 | U8 | *(DNP)* MEMS mic | Future voice (reserved footprint) | — | — |
+
+Notes:
+- **LT3042:** chose the **genuine ADI** part (C666568) over the cheaper Tokmas clone (C49383092,
+  LT3042EMSE) — clean power is the whole point of this rail.
+- **TRRS jack (PJ-320A):** confirm at layout time that (a) the footprint pin order matches our wiring
+  (Tip=L, Ring1=R, Ring2=GND, Sleeve=MIC) and (b) it has the **switched detect contact** for
+  auto-pause-on-unplug (PJ-320A variants differ).
 
 ## Bill of materials — passives & connectors
 
@@ -174,8 +184,11 @@ dropping it (use GPIO1) is a valid parts-saving if accuracy isn't critical.
 
 ## Open items
 
-- Confirm exact free GPIOs (and a free ADC1 pin) from the board demo/schematic.
-- Confirm LCSC part numbers for SN74AXC4T245, PCA9306, FS8205A, ESD array, TRRS jack.
-- Decide battery cell (deferred).
+- ~~Confirm free GPIOs / ADC1 pin~~ ✅ (verified from schematic + header map).
+- ~~Confirm LCSC part numbers~~ ✅ all ICs + the TRRS jack sourced (see BOM). Still pick an
+  **ESD array** part number, and confirm the **PJ-320A footprint** (pin order + detect switch).
+- LT3042 **R_SET = 18 kΩ 0.1 %** for 1.8 V (R_SET × 100 µA = Vout). *(Drop the LT3042 datasheet in
+  reference/ to double-check SET/output caps.)*
+- Decide battery cell — picked 103450 ~2000 mAh (confirm against a live listing).
 - 2-layer vs 4-layer (lean 4-layer for clean ground near WiFi; revisit on cost).
 - Schematic capture → Gerbers + JLCPCB assembly BOM/CPL.
