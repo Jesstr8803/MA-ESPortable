@@ -4,9 +4,11 @@
 # MCP server config (machine-specific absolute paths to local bridge)
 .mcp.json
 
-# Build artifacts (adjust once toolchain is chosen)
+# Build artifacts (ESP-IDF)
 build/
 managed_components/
+dependencies.lock
+sdkconfig
 sdkconfig.old
 *.log
 
