@@ -73,7 +73,7 @@ CNC-aluminum v2 (u.FL external antenna makes the metal body viable).
 | **Display** | **Waveshare ESP32-S3-AMOLED-1.91 (touch)** — 240×536 AMOLED bar (QSPI). Premium look; burn-in mitigated by screen-sleep + dimming + periodic pixel-shift. See Reproducibility below. |
 | **Audio** | **Cirrus Logic CS43131** — single-chip DAC + ground-centered headphone amp (130 dB DR, −115 dB THD+N, 32-bit/384 kHz, 2 Vrms into 600 Ω). One chip = whole output stage; covers IEMs → demanding over-ears. In stock on LCSC (C1554754 / C1554759) → JLCPCB-assemblable. 5×5 QFN (needs assembly, not hand-solder). |
 | **Jack** | 4-conductor **TRRS** so we can read the headphone inline remote (see Control scheme). |
-| **Power** | Onboard charging (board's MX1.25 header). **Battery: off-the-shelf flat LiPo pouch** with a JST/MX1.25 connector (catalog ~1200 mAh, ~5×35×62 mm — reorderable, slim, no holder). Carrier adds DW01A protection. Stretch runtime via screen-sleep + WiFi power-save + deep buffer. |
+| **Power** | Onboard charging (board's MX1.25 header). **Battery: off-the-shelf LiPo pouch, ~103450 (10×34×50 mm, ~2000 mAh)** with a JST/MX1.25 connector — common, reorderable, and its footprint tucks *within* the ~60×28.5 mm board (thicker rather than overhanging). Carrier adds DW01A protection. ~10 h with screen-sleep + WiFi power-save + deep buffer. |
 | **Sensors** | QMI8658 6-axis IMU (wake-on-pickup). Haptic motor. |
 | **Build** | **Prototype on the Waveshare ESP32-S3-AMOLED-1.91 (touch)** + DAC + TRRS breakouts → then a **custom carrier/shield PCB** on its 20-pin headers → resin-printed v1 enclosure → CNC-aluminum v2. |
 
