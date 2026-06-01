@@ -3,8 +3,11 @@
 ESP-IDF firmware for the Waveshare **ESP32-S3-AMOLED-1.91 (touch)** board. Most of it runs on the
 **bare board** — the carrier (audio/gauge) is only needed for audio output and is added later.
 
-> Status: **scaffold.** Project structure, dependency manifest, verified pin map, and a WiFi/boot
-> skeleton are in place; the milestone TODOs below are not yet implemented.
+> Status: **scaffold that BUILDS.** Verified to compile clean on ESP-IDF v5.5.4 (esp32s3) with the
+> full dependency tree resolved (`sendspin-cpp` 0.6.1, SH8601 2.0.1, LVGL 8.4, esp_lcd_touch,
+> esp_websocket_client, mdns). Pin map, WiFi/boot skeleton, and an LVGL UI foundation (theme +
+> screen manager + Now Playing) are in place and compiling. Milestone TODOs below are next.
+> See `architecture.md` (tasks/cores/state machine + predecessor reuse) and `tier2-ma-api.md`.
 
 ## Requirements
 - **ESP-IDF v5.5+** (required by `sendspin-cpp`)
