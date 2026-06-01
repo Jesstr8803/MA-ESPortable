@@ -93,23 +93,29 @@ From `hardware/reference/ESP32-S3-AMOLED-1.91.pdf` (legend table, coordinate-ext
 **Genuinely FREE:** **2, 3, 4, 10, 11, 12, 13, 14, 15, 16, 21, 38** (+ **42** if microSD unused).
 **Free ADC1 (for remote-sense): 2, 3, 4, 10.** 12 free pins — ample.
 
-## ESP32 header pins — carrier assignment *(verified-pin-based; header positions TBD)*
+## ESP32 header pins — carrier assignment *(FINAL, header-confirmed)*
 
-| Signal | GPIO | Constraint / notes |
-|---|---|---|
-| I²S MCLK | 10 | mandatory; via U6 level shifter |
-| I²S BCLK | 11 | via U6 |
-| I²S LRCK | 12 | via U6 |
-| I²S SDOUT (→DAC SDIN) | 13 | via U6 |
-| I²C SDA / SCL | **40 / 39** | board's shared bus; +DRV2605L/MAX17048; +PCA9306→CS43131 |
-| **Remote-sense ADC** | **2** (ADC1) | **must be ADC1** (ADC2 dead w/ WiFi) |
-| Jack-detect | 14 | TRRS detect switch → auto-pause on unplug |
-| DRV2605L EN | 15 | optional (or tie high) |
-| MAX17048 ALRT | 16 | optional low-battery interrupt |
-| Future mic ADC | 3 (ADC1) | reserved (DNP) |
-| spare | 4, 21, 38 (+42 if no SD) | headroom |
-| 3V3 / GND | power | from header |
-| VBAT | carrier-internal | cell → protection (not from header) |
+Header positions verified from the board's 40-pin map (see `pinout-crossref.md`).
+
+| Signal | GPIO | Header pin | Notes |
+|---|---|---|---|
+| I²S MCLK | 11 | 9 | mandatory; via U6 level shifter |
+| I²S BCLK | 12 | 10 | via U6 |
+| I²S LRCK | 13 | 11 | via U6 |
+| I²S SDOUT (→DAC SDIN) | 14 | 12 | via U6 |
+| I²C SDA / SCL | **40 / 39** | 29 / 27 | board's shared bus; +DRV2605L/MAX17048; +PCA9306→CS43131 |
+| **Remote-sense ADC** | **2** (ADC1) | 6 | **must be ADC1** (ADC2 dead w/ WiFi) |
+| Future mic ADC | 3 (ADC1) | 7 | reserved (DNP) |
+| Jack-detect | 15 | 14 | TRRS detect switch → auto-pause on unplug |
+| DRV2605L EN | 16 | 34 | optional (or tie high) |
+| MAX17048 ALRT | 21 | 17 | optional low-battery interrupt |
+| spare (ADC1) | 4, 10 | 31, 32 | headroom |
+| spare | 38 | 26 | headroom |
+| Power | 3V3 / VSYS / GND | 36 / 39 / many | VSYS = post-charger rail |
+
+**Power simplification:** the header exposes **VSYS** (pin 39, post-charger system rail) — likely the
+cleanest VBAT tap for the LT3042 audio LDO, so the carrier can draw power from the header and may not
+need its own battery wiring (the battery plugs into the board's MX1.25). Confirm VSYS = battery rail.
 
 **Battery gauge note:** the board senses battery voltage on **GPIO1** — so a basic %-from-voltage
 readout is possible *without* the MAX17048. We keep MAX17048 for accurate ModelGauge % under load;
