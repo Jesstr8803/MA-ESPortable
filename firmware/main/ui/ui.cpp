@@ -7,31 +7,28 @@
 // from screen_now_playing.cpp
 lv_obj_t *screen_now_playing_create(void);
 void      screen_now_playing_update(const ui_nowplaying_t *np);
+// from screens_aux.cpp
+lv_obj_t *screen_library_create(void);
+lv_obj_t *screen_list_create(void);
+lv_obj_t *screen_queue_create(void);
+lv_obj_t *screen_settings_create(void);
+lv_obj_t *screen_lock_create(void);
+lv_obj_t *screen_state_create(const char *big, const char *sub);
 
 static lv_obj_t   *s_screens[UI_SCREEN_LOCK + 1];
 static ui_screen_t s_current = UI_SCREEN_BOOT;
 
-// Minimal centered-label placeholder for screens not yet ported.
-static lv_obj_t *make_stub(const char *text) {
-    lv_obj_t *scr = lv_obj_create(NULL);
-    lv_obj_set_style_bg_color(scr, UI_COL_BG, 0);
-    lv_obj_t *l = lv_label_create(scr);
-    lv_label_set_text(l, text);
-    lv_obj_set_style_text_color(l, UI_COL_DIM, 0);
-    lv_obj_center(l);
-    return scr;
-}
-
 void ui_init(void) {
-    s_screens[UI_SCREEN_BOOT]        = make_stub("MA-ESPortable");
-    s_screens[UI_SCREEN_CONNECTING]  = make_stub("Connecting" LV_SYMBOL_REFRESH);
+    s_screens[UI_SCREEN_BOOT]        = screen_state_create("MA-ESPortable", "v0.1.0");
+    s_screens[UI_SCREEN_CONNECTING]  = screen_state_create("Connecting" LV_SYMBOL_REFRESH,
+                                                           "Music Assistant");
     s_screens[UI_SCREEN_NOW_PLAYING] = screen_now_playing_create();
-    s_screens[UI_SCREEN_LIBRARY]     = make_stub("Library");      // TODO: 2x2 tiles
-    s_screens[UI_SCREEN_LIST]        = make_stub("List");         // TODO: paged list + lazy art
-    s_screens[UI_SCREEN_QUEUE]       = make_stub("Up Next");      // TODO
-    s_screens[UI_SCREEN_SETTINGS]    = make_stub("Settings");     // TODO
-    s_screens[UI_SCREEN_CHARGING]    = make_stub(LV_SYMBOL_CHARGE);
-    s_screens[UI_SCREEN_LOCK]        = make_stub(LV_SYMBOL_POWER "  hold to unlock");
+    s_screens[UI_SCREEN_LIBRARY]     = screen_library_create();
+    s_screens[UI_SCREEN_LIST]        = screen_list_create();
+    s_screens[UI_SCREEN_QUEUE]       = screen_queue_create();
+    s_screens[UI_SCREEN_SETTINGS]    = screen_settings_create();
+    s_screens[UI_SCREEN_CHARGING]    = screen_state_create(LV_SYMBOL_CHARGE "  72%", "Charging");
+    s_screens[UI_SCREEN_LOCK]        = screen_lock_create();
     ui_show(UI_SCREEN_BOOT);
 }
 
