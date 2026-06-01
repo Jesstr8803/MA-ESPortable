@@ -1,0 +1,27 @@
+# Managed component dependencies (ESP-IDF Component Manager).
+# Versions are starting points — `idf.py reconfigure` resolves/locks them.
+dependencies:
+  idf:
+    version: ">=5.5"
+
+  # --- Sendspin protocol SDK (the whole point) ---
+  sendspin/sendspin-cpp: "*"
+
+  # --- Display: SH8601-class AMOLED over QSPI + LVGL ---
+  # (Waveshare's demo uses esp_lcd_sh8601; confirm exact component name/source.)
+  espressif/esp_lcd_sh8601: "*"
+  lvgl/lvgl: "^8.3.0"
+
+  # --- Touch: FT3168 (capacitive, I2C) ---
+  # esp_lcd_touch family; confirm the FT3168/FT6x36-compatible component.
+  espressif/esp_lcd_touch: "*"
+
+  # --- Misc ---
+  espressif/mdns: "*"
+
+# Components we'll add as the carrier comes online (kept here as a checklist):
+#   - QMI8658 IMU driver (I2C)        — wake-on-pickup / orientation
+#   - CS43131 codec init (I2C)        — DAC + headphone amp
+#   - MAX17048 fuel gauge (I2C)
+# These talk over the shared I2C bus; drivers are small and can be vendored
+# into components/ if no maintained ESP-IDF component exists.

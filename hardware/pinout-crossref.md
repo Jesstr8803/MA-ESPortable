@@ -44,7 +44,7 @@ demo-source guesses.
 
 **Legend / notes**
 - **‡** I²C bus = **SDA 40 / SCL 39** (note the order), shared by the touch (FT3168) and IMU
-  (QMI8658). Our carrier's CS43131 / DRV2605L / MAX17048 join this same bus — that's the plan.
+  (QMI8658). Our carrier's CS43131 / MAX17048 join this same bus — that's the plan.
 - **IMU is on I²C** (39/40) with interrupts on 45/46. (The demo's `QMI8658_USE_SPI` define is a
   red herring; the schematic wires it I²C.)
 - **†/*** SD is **muxed with the display** (SD_MISO=8, SD_CS=9, SD_CLK=47 are shared AMOLED pins;
@@ -52,8 +52,7 @@ demo-source guesses.
 
 **Genuinely FREE GPIOs:** **2, 3, 4, 10, 11, 12, 13, 14, 15, 16, 21, 38** (+ **42** if microSD unused).
 **ADC1-capable free (for remote-sense):** **2, 3, 4, 10**.
-That's 12 free pins — plenty for I²S(4) + remote-sense ADC(1) + jack-detect(1) + haptic-EN(1) +
-gauge-ALRT(1) = 8.
+That's 12 free pins — plenty for I²S(4) + remote-sense ADC(1) + jack-detect(1) + gauge-ALRT(1) = 7.
 
 ## Still to confirm on the physical board
 - [ ] Each FREE GPIO is actually broken out on the 2×20 headers (vs. only on internal pads).
@@ -105,22 +104,7 @@ likely a charge-status line — possibly useful for the charging-screen UI (conf
 | Remote-sense ADC (ADC1) | 2 | 6 |
 | Future mic ADC (ADC1) | 3 | 7 |
 | Jack-detect | 15 | 14 |
-| DRV2605L EN | 16 | 34 |
 | MAX17048 ALRT | 21 | 17 |
 | Spare (ADC1) | 4, 10 | 31, 32 |
-| Spare | 38 | 26 |
+| Spare | 16, 38 | 34, 26 |
 | Power | 3V3 / VSYS / GND | 36 / 39 / many |
-
-## Tentative carrier assignment (fill in once confirmed)
-| Carrier signal | Proposed GPIO | Confirmed GPIO |
-|---|---|---|
-| I²S MCLK | 41 | |
-| I²S BCLK | 42 (if SD dropped) / 38 | |
-| I²S LRCK | 45 | |
-| I²S SDOUT → DAC | 46 | |
-| I²C SDA / SCL (shared) | 40 / 39 | |
-| Remote-sense ADC (ADC1) | 2 | |
-| Jack-detect | 16 | |
-| DRV2605L EN | 38 | |
-| MAX17048 ALRT | 21 | |
-| Future mic ADC (ADC1) | 3 | |
