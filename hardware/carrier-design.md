@@ -42,13 +42,24 @@ can be upgraded to full spec later with just a soldering iron — no respin. Opt
 | Q1 | *(opt)* FS8205A | Dual N-MOSFET for protection (with U5) | SOT-23-6 | *(confirm)* |
 | U6 | **SN74AXC4T245** | 4-bit level shifter (I²S) | — | *(confirm)* |
 | U7 | **PCA9306** | I²C voltage translator | — | *(confirm)* |
+| LRA1 | **LRA** (linear resonant actuator) | Haptic actuator | coin ~10 mm or bar | *(pick)* |
 | U8 | *(DNP)* MEMS mic | Future voice (reserved footprint) | — | — |
+
+**Haptic actuator (LRA) selection:** want an **LRA**, *not* an ERM. Key specs: resonant freq
+~170–235 Hz (DRV2605L auto-tracks), rated ~2.0–2.5 Vrms, solder-pad or flex/JST lead. **Coin LRA
+(~10 mm Ø × ~3 mm)** = easy flush mount, cheap, common (lean this). **Bar LRA** = stronger
+"Taptic"-like thump but bigger. Mount rigidly to the chassis (half the feel is mechanical).
 
 ## Bill of materials — passives & connectors
 
-- **CS43131:** FLYP/FLYN flying caps **1 µF ×2**; charge-pump output cap **1 µF**; per-rail decoupling
-  **100 nF** on each supply (VA/VD/VL/VHP) + **1–10 µF** bulk; optional series ferrite + small cap on
-  HPOUTL/R for EMI.
+- **CS43131** (verified from datasheet Typical Connection Diagram, p10):
+  - **VCP (charge pump) = battery 3.0–5.25 V direct** → feed from **VSYS** (header pin 39), *not* 1.8 V.
+  - **VA / VL / VD = +1.8 V** ← from the LT3042.
+  - Flying caps **2.2 µF** (FLYP/FLYN nodes), VCP_FILT± **2.2 µF**, VCP reservoir **4.7 µF**,
+    **FILT± = 15 µF**, decoupling **0.1 µF** on VL/VD/VA.
+  - **ADR pin → GND** sets I²C address **0x30** (last two bits 00). ✅
+  - Headphone out: **HPOUTA/B direct to TRRS L/R**, **HPREFA/B = ground ref** (ground-centered, no DC
+    blocking caps). MCLK external on XTI/MCLK ← our I²S MCLK.
 - **LT3042:** **R_set = 18 kΩ** (0.1 % for accuracy) → 1.8 V; SET cap **4.7 µF** (ultra-low noise);
   C_in **1–10 µF**, C_out **10 µF** low-ESR; EN pull-up.
 - **DRV2605L:** VDD **100 nF + 1 µF**; OUT± to LRA; EN to GPIO or pulled high.
@@ -66,11 +77,12 @@ can be upgraded to full spec later with just a soldering iron — no respin. Opt
 ## Power tree (rails)
 
 ```
-CELL ──[DW01A + Q1 protection]── VBAT ──┬──► board MX1.25 battery input (board charges + power-paths)
-                                        ├──► MAX17048 CELL sense
-                                        └──► LT3042 (R_set 18k) ──► 1.8V_A (clean) ──► CS43131 rails
-3V3 (from board header) ──► remote-sense bias, level-shifter HIGH side, DRV2605L, MAX17048, PCA9306 hi
-1.8V_A ──► CS43131 (VA/VD/VL), level-shifter LOW side, PCA9306 low side
+VSYS (header pin 39, raw battery rail) ──┬──► LT3042 (R_set 18k) ──► 1.8V_A (clean) ──► CS43131 VA/VD/VL
+                                         ├──► CS43131 VCP (charge pump, wants 3.0–5.25V direct)
+                                         └──► DRV2605L (LRA drive)
+3V3 (header pin 36) ──► remote-sense bias, level-shifter HIGH side, MAX17048, PCA9306 hi side
+1.8V_A ──► level-shifter LOW side, PCA9306 low side
+(Battery itself plugs into the BOARD's MX1.25 input; board has the charger + power-path → VSYS.)
 ```
 - CS43131 audio rail is its **own analog island** off the LT3042, **star-grounded** to system GND,
   away from the ESP32/WiFi/QSPI-display switching noise.
