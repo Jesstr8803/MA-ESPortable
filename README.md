@@ -48,7 +48,7 @@ audio + a taste of the UI). All four "optional" features below are **confirmed i
 **🔵 v1 — feels like a product:**
 - Album art (Sendspin `artwork`); shuffle / repeat; room/group switch.
 - **Headphone inline-remote** control (TRRS + ADC decode + "learn my remote") — *in scope*.
-- **IMU wake-on-pickup**; screen sleep / touch-lockout / hold-to-unlock; **haptic** feedback.
+- **IMU wake-on-pickup**; screen sleep / touch-lockout / hold-to-unlock.
 - Battery + charging indicator; settings screen (name, brightness, sleep timeout, static-delay,
   remote calibration); boot splash; dark theme.
 - Captive-portal WiFi provisioning; **OTA** over WiFi; pop/mute suppression; `/status`; multi-server
@@ -74,7 +74,7 @@ CNC-aluminum v2 (u.FL external antenna makes the metal body viable).
 | **Audio** | **Cirrus Logic CS43131** — single-chip DAC + ground-centered headphone amp (130 dB DR, −115 dB THD+N, 32-bit/384 kHz, 2 Vrms into 600 Ω). One chip = whole output stage; covers IEMs → demanding over-ears. In stock on LCSC (C1554754 / C1554759) → JLCPCB-assemblable. 5×5 QFN (needs assembly, not hand-solder). |
 | **Jack** | 4-conductor **TRRS** so we can read the headphone inline remote (see Control scheme). |
 | **Power** | Onboard charging (board's MX1.25 header). **Battery: off-the-shelf LiPo pouch, 103450 (10×34×50 mm, ~2000 mAh)** with a JST/MX1.25 connector — *the* common 2000 mAh size. 50 mm length fits the 59.6 mm board; 34 mm width overhangs the 28.5 mm board by ~5 mm (enclosure sits slightly wider than the board — fine, nicer grip). Carrier adds DW01A protection. ~10 h with screen-sleep + WiFi power-save + deep buffer. |
-| **Sensors** | QMI8658 6-axis IMU (wake-on-pickup). Haptic motor. |
+| **Sensors** | QMI8658 6-axis IMU (wake-on-pickup). |
 | **Build** | **Prototype on the Waveshare ESP32-S3-AMOLED-1.91 (touch)** + DAC + TRRS breakouts → then a **custom carrier/shield PCB** on its 20-pin headers → resin-printed v1 enclosure → CNC-aluminum v2. |
 
 ## Reproducibility & hardware architecture
@@ -88,19 +88,17 @@ web-flasher on GitHub Pages).
 - The **Waveshare board** provides the hard parts: ESP32-S3 module, WiFi antenna/RF, AMOLED panel
   (QSPI) + touch, PMIC, IMU. (No RF/antenna/FPC layout for us to get right.)
 - Our **carrier PCB** holds only the analog section: I²S DAC + headphone amp + TRRS jack +
-  headphone-remote ADC-sense + haptic driver + jack-detect. It mates to the display board's
+  headphone-remote ADC-sense + jack-detect. It mates to the display board's
   exposed header / castellated pads.
-- **Haptics ("Taptic-style"):** a **TI DRV2605L** driver (LCSC C527464; 100+ built-in effects +
-  closed-loop auto-resonance with overdrive/braking) driving an **LRA** (not a buzzy ERM). Gives
-  crisp designed taps for the buttonless touch UI. *The LRA must be rigidly bonded to the chassis*
-  — half the feel is mechanical (an enclosure constraint). Won't match Apple's bespoke Taptic
-  Engine, but uses the same LRA + waveform-engine architecture.
 - **Reproduction = "buy Waveshare board + order the carrier from JLCPCB (or buy it assembled on
   Tindie) + print the STLs + assemble."**
+- *Haptics: **dropped.** Considered an LRA + DRV2605L "Taptic-style" feedback, but cut it — no LRA
+  on LCSC (every builder would hand-source one, breaking reproducibility), it draws battery for pure
+  polish, and it adds an enclosure mounting constraint. Cool, but unjustified.*
 
 **Display board (chosen): Waveshare ESP32-S3-AMOLED-1.91, touch version** — a slim **240×536
 AMOLED bar**. It exposes **2× 20-pin headers (~27 GPIO, 8 ADC, 2 I²C, SPI)**, so the carrier
-mounts as a clean shield with plenty of headroom (I²S ×3, ADC remote-sense, haptic, jack-detect,
+mounts as a clean shield with plenty of headroom (I²S ×3, ADC remote-sense, jack-detect,
 fuel gauge, power button). Onboard: ESP32-S3R8 (8 MB PSRAM, 16 MB flash), QMI8658 IMU, USB-C, and
 an MX1.25 LiPo charge/discharge header. The tall-narrow shape suits both a vertical now-playing
 layout and scrolling library lists.
@@ -153,7 +151,6 @@ CELL ──[DW01A + dual-MOSFET protection]── VBAT ──┬──► board 
  (off-the-shelf, carrier holder)                 ├──► MAX17048 fuel gauge (I²C → accurate %)
                                                  ├──► LT3042 ultra-low-noise LDO ──► 1.8V analog
                                                  │       island ──► CS43131  ★audio-critical★
-                                                 └──► DRV2605L haptics (VBAT/3V3)
 Power button ──► short = deep-sleep / long = latch-off      IMU motion-int ──► wake
 ```
 
@@ -208,7 +205,7 @@ No text entry on the 20 mm screen — config happens off-device:
   name, MA server/token, OTA, etc. No network-switching, works on any device incl. iPhone (the device
   already runs an HTTP server). This is the primary config path.
 - **On-device Settings** = view + simple touch controls only (brightness, sleep timeout, audio-sync,
-  haptics, calibrate-remote, volume) + status. A "Change Wi-Fi" button reboots into setup mode.
+  calibrate-remote, volume) + status. A "Change Wi-Fi" button reboots into setup mode.
 - **BLE config: deferred (possible future add).** Its only unique win is skipping the one-time
   first-setup/Wi-Fi-change network switch; ongoing config is already switch-free via the on-LAN page.
   It's Android/desktop-Chrome only (no iOS Safari) so it can't replace SoftAP anyway. Cheap to add

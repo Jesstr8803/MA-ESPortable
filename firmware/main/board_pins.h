@@ -55,17 +55,16 @@
 
 // I2C addresses of carrier chips (share PIN_I2C_SDA/SCL via PCA9306 for the DAC)
 #define I2C_ADDR_DAC      0x30   // CS43131 (0x31 if AD0 high)
-#define I2C_ADDR_HAPTIC   0x5A   // DRV2605L (fixed)
 #define I2C_ADDR_GAUGE    0x36   // MAX17048 (fixed)
 
 // Analog front-end / control
 #define PIN_REMOTE_ADC    2      // ADC1_CH1  — headphone inline-remote sense (header pin 6)
 #define PIN_MIC_ADC       3      // ADC1_CH2  — future voice (DNP) (header pin 7)
 #define PIN_JACK_DETECT   15     // TRRS detect switch -> auto-pause (header pin 14)
-#define PIN_HAPTIC_EN     16     // DRV2605L EN (header pin 34)
 #define PIN_GAUGE_ALRT    21     // MAX17048 ALRT, low-batt int (header pin 17)
 
-// Spare, broken out, free for future use: GPIO4 (pin31, ADC1), GPIO10 (pin32, ADC1), GPIO38 (pin26)
+// (Haptics dropped — no LRA on LCSC, draws power for pure polish.)
+// Spare, broken out, free: GPIO4 (pin31, ADC1), GPIO10 (pin32, ADC1), GPIO16 (pin34), GPIO38 (pin26)
 
 // Power rails from the header: 3V3 (pin36), VSYS (pin39, raw system rail), GND.
 // Carrier's LT3042 taps VSYS -> clean 1.8V analog rail for the CS43131.

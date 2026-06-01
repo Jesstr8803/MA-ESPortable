@@ -1,7 +1,7 @@
 # MA-ESPortable — firmware
 
 ESP-IDF firmware for the Waveshare **ESP32-S3-AMOLED-1.91 (touch)** board. Most of it runs on the
-**bare board** — the carrier (audio/haptics/gauge) is only needed for audio output and is added later.
+**bare board** — the carrier (audio/gauge) is only needed for audio output and is added later.
 
 > Status: **scaffold.** Project structure, dependency manifest, verified pin map, and a WiFi/boot
 > skeleton are in place; the milestone TODOs below are not yet implemented.

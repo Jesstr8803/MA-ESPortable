@@ -22,7 +22,6 @@ dependencies:
 # Components we'll add as the carrier comes online (kept here as a checklist):
 #   - QMI8658 IMU driver (I2C)        — wake-on-pickup / orientation
 #   - CS43131 codec init (I2C)        — DAC + headphone amp
-#   - DRV2605L haptic driver (I2C)
 #   - MAX17048 fuel gauge (I2C)
 # These talk over the shared I2C bus; drivers are small and can be vendored
 # into components/ if no maintained ESP-IDF component exists.
