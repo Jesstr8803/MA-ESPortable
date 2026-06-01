@@ -66,9 +66,15 @@ Notes:
   - **ADR pin → GND** sets I²C address **0x30** (last two bits 00). ✅
   - Headphone out: **HPOUTA/B direct to TRRS L/R**, **HPREFA/B = ground ref** (ground-centered, no DC
     blocking caps). MCLK external on XTI/MCLK ← our I²S MCLK.
-- **LT3042:** **R_set = 18 kΩ** (0.1 % for accuracy) → 1.8 V; SET cap **4.7 µF** (ultra-low noise);
-  C_in **1–10 µF**, C_out **10 µF** low-ESR; EN pull-up.
-- **MAX17048:** VDD **1 µF**; CELL sense to VBAT (optional RC); ALRT → GPIO (optional low-batt int).
+- **LT3042** (verified from datasheet): Vout = ISET(100 µA) × R_SET → **R_SET = 18 kΩ, 0.1 %** for 1.8 V.
+  SET cap: 10 nF works, but **up to 22 µF for lowest 1/f noise** — use a large SET cap (e.g. 4.7–22 µF)
+  since this is the audio rail (tradeoff = slower startup, fine for us). C_out **≥4.7 µF ceramic**
+  (use **10 µF** for margin), C_in 1–10 µF, EN pull-up. **Layout:** Kelvin-connect the R_SET ground
+  and OUTS directly to the load/output cap (matters for the clean rail).
+- **MAX17048** (verified): **no sense resistor** (ModelGauge); VDD bypass **0.1 µF** (+ 1 µF bulk ok);
+  **CELL pin → battery + terminal (VBAT)**; ALRT = open-drain active-low → GPIO (optional low-batt int,
+  needs a pull-up); QSTRT → GND (tie off, unused). I²C needs **4.7 kΩ pull-ups** (shared bus already
+  has them).
 - **Protection (DW01A + Q1):** per datasheet — ~**100–470 Ω** + **100 nF** on VDD; FETs in the cell
   B− path.
 - **Remote-sense:** **R_bias 2.2 kΩ** (MIC→3.3 V); RC filter **1 kΩ + 100 nF** into the ADC.
@@ -188,8 +194,8 @@ dropping it (use GPIO1) is a valid parts-saving if accuracy isn't critical.
 - ~~Confirm free GPIOs / ADC1 pin~~ ✅ (verified from schematic + header map).
 - ~~Confirm LCSC part numbers~~ ✅ all ICs + the TRRS jack sourced (see BOM). Still pick an
   **ESD array** part number, and confirm the **PJ-320A footprint** (pin order + detect switch).
-- LT3042 **R_SET = 18 kΩ 0.1 %** for 1.8 V (R_SET × 100 µA = Vout). *(Drop the LT3042 datasheet in
-  reference/ to double-check SET/output caps.)*
+- ~~LT3042 R_SET / caps~~ ✅ verified from datasheet (R_SET 18 kΩ; SET cap 4.7–22 µF for low noise;
+  C_out ≥4.7 µF). ~~MAX17048 passives~~ ✅ verified (no sense R; VDD 0.1 µF; CELL→VBAT+; QSTRT→GND).
 - Decide battery cell — picked 103450 ~2000 mAh (confirm against a live listing).
 - **2-layer is the plan** (cheaper, and fine here — the carrier is low-speed: I²C + I²S + analog,
   with all RF/QSPI/PSRAM on the Waveshare board, not ours). Execute the "star ground" as a
