@@ -28,8 +28,8 @@ protection, and the headphone jack + inline-remote sense.
 | U2 | **DRV2605L** | Haptic driver (LRA), I²C | VSSOP-10 | C527464 |
 | U3 | **MAX17048** | Battery fuel gauge (ModelGauge), I²C | — | C2682616 |
 | U4 | **LT3042** | Ultra-low-noise LDO → 1.8 V audio rail | DFN | C666568 |
-| U5 | **DW01A** | 1-cell Li-ion protection | SOT-23-6 | C700964 |
-| Q1 | **FS8205A** | Dual N-MOSFET for protection | SOT-23-6 | *(confirm)* |
+| U5 | *(opt)* DW01A | 1-cell protection — **omit if pouch is protected** | SOT-23-6 | C700964 |
+| Q1 | *(opt)* FS8205A | Dual N-MOSFET for protection (with U5) | SOT-23-6 | *(confirm)* |
 | U6 | **SN74AXC4T245** | 4-bit level shifter (I²S) | — | *(confirm)* |
 | U7 | **PCA9306** | I²C voltage translator | — | *(confirm)* |
 | U8 | *(DNP)* MEMS mic | Future voice (reserved footprint) | — | — |
@@ -117,9 +117,32 @@ Header positions verified from the board's 40-pin map (see `pinout-crossref.md`)
 | spare | 38 | 26 | headroom |
 | Power | 3V3 / VSYS / GND | 36 / 39 / many | VSYS = post-charger rail |
 
-**Power simplification:** the header exposes **VSYS** (pin 39, post-charger system rail) — likely the
-cleanest VBAT tap for the LT3042 audio LDO, so the carrier can draw power from the header and may not
-need its own battery wiring (the battery plugs into the board's MX1.25). Confirm VSYS = battery rail.
+**Power source CONFIRMED:** the board's "switching of power" is an auto power-path — BAT via an
+**APM2307 P-FET** OR USB-VCC via a **1N4148** (OR-ing/gate ref, not main current path) → **VSYS**. So
+VSYS (pin 39) is the raw system rail: battery (3.0–4.2 V) on battery, USB-derived when plugged — always
+> the LT3042's ~2.15 V min for 1.8 V out. **Carrier draws VSYS + 3V3 + GND from the header**; the
+LT3042's ~79 dB PSRR scrubs charger/USB noise. No separate battery wire on the carrier.
+
+**Protection likely NOT needed on carrier:** battery plugs into the board's MX1.25 (board has the
+PL4054 charger). Most off-the-shelf LiPo pouches with a connector **already include a protection PCB**,
+so we can drop the DW01A + FS8205A from the carrier BOM — *just buy a protected pouch* (confirm at
+purchase). Keep them only if using a bare/unprotected cell.
+
+## I²C bus — address map (no collisions)
+
+The carrier's 3 chips share the board's I²C bus (SDA 40 / SCL 39) with the existing touch + IMU:
+
+| Device | 7-bit addr | Notes |
+|---|---|---|
+| FT3168 touch | 0x38 | existing (FocalTech standard — confirm in touch demo) |
+| QMI8658 IMU | 0x6A / 0x6B | existing (from demo + datasheet) |
+| CS43131 DAC | 0x30 (0x31 if AD0 high) | ours |
+| DRV2605L haptic | **0x5A (fixed)** | ours — no address pins |
+| MAX17048 gauge | **0x36 (fixed)** | ours — no address pins |
+
+All distinct → **no collisions**. The two fixed addresses (0x5A, 0x36) are unoccupied by anything else.
+Bus loading: 5 devices total — the board's existing pull-ups are likely fine; add stronger pull-ups
+only if the extended bus is marginal.
 
 **Battery gauge note:** the board senses battery voltage on **GPIO1** — so a basic %-from-voltage
 readout is possible *without* the MAX17048. We keep MAX17048 for accurate ModelGauge % under load;
