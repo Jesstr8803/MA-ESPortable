@@ -173,7 +173,8 @@ dropping it (use GPIO1) is a valid parts-saving if accuracy isn't critical.
 
 ## Layout guidance
 
-- **Two ground domains, single-point (star) tie:** quiet **analog GND** (CS43131, LT3042, HP return,
+- **2-layer:** bottom = ground pour, top = signals + power w/ ground fill. **Two ground domains,
+  single-point (star) tie:** quiet **analog GND** (CS43131, LT3042, HP return,
   flying caps) vs **digital/system GND** (ESP32 header, level shifters, I²C). Join at one
   point near the LT3042/CS43131 ground.
 - Keep the **LT3042 + CS43131 + flying caps** tight together; short, wide analog traces.
@@ -190,5 +191,9 @@ dropping it (use GPIO1) is a valid parts-saving if accuracy isn't critical.
 - LT3042 **R_SET = 18 kΩ 0.1 %** for 1.8 V (R_SET × 100 µA = Vout). *(Drop the LT3042 datasheet in
   reference/ to double-check SET/output caps.)*
 - Decide battery cell — picked 103450 ~2000 mAh (confirm against a live listing).
-- 2-layer vs 4-layer (lean 4-layer for clean ground near WiFi; revisit on cost).
+- **2-layer is the plan** (cheaper, and fine here — the carrier is low-speed: I²C + I²S + analog,
+  with all RF/QSPI/PSRAM on the Waveshare board, not ours). Execute the "star ground" as a
+  **partitioned bottom-layer ground pour**: contiguous analog-GND region (DAC, LT3042, HP return)
+  + digital-GND region, joined at a single neck by the LT3042/CS43131. Keep audio traces short, the
+  LT3042 loop tight, and don't let an I²S trace slot the analog pour under the DAC.
 - Schematic capture → Gerbers + JLCPCB assembly BOM/CPL.
