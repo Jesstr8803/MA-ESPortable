@@ -3,8 +3,47 @@
 **A minimalist AMOLED glass-slab WiFi DAP for Music Assistant.**
 *Think "an iPod that streams your whole Music Assistant library over WiFi" — a pocket digital audio player that streams to your wired headphones and shows now-playing + library controls on a premium touchscreen.*
 
-> ⚠️ **Status: concept / planning in progress.** This document is a living design doc, not a
-> locked spec. Decisions below are current direction and will keep evolving as we plan.
+> **Status: pre-hardware.** Design is complete and the firmware **scaffold compiles** on ESP-IDF
+> v5.5.4; bring-up begins when the Waveshare board arrives. This README is the project guide; the
+> sections below are the living design record.
+
+---
+
+## Repository guide
+
+| Path | What's there |
+|---|---|
+| `README.md` | This — concept, design decisions, project map |
+| `firmware/` | ESP-IDF firmware (builds today). `architecture.md`, `tier2-ma-api.md`, `main/` |
+| `hardware/` | `carrier-design.md` (BOM + nets + layout), `pinout-crossref.md`, `reference/` (datasheets, board PDF, 3D model) |
+| `ui-prototype/` | Browser mock of the UI (open `index.html`) — the screen designs the firmware ports |
+| `tools/` | `ma_probe.py` (capture Music Assistant API responses), `ota_push.py` (later) |
+
+**Two boards:** an off-the-shelf **Waveshare ESP32-S3-AMOLED-1.91 (touch)** + a custom **carrier PCB**
+(audio DAC + headphone jack + battery) that mounts on its 2×20 header. The Waveshare board runs the
+firmware; the carrier adds the analog/audio section. See `hardware/carrier-design.md`.
+
+## Build & flash the firmware
+
+Requires **ESP-IDF v5.5+** (the `sendspin-cpp` SDK needs it) and an ESP32-S3 target.
+
+```bash
+cd firmware
+idf.py set-target esp32s3
+idf.py build
+idf.py -p <PORT> flash monitor      # once a board is connected
+```
+First build fetches managed components (sendspin-cpp, the SH8601 AMOLED driver, LVGL, touch,
+websocket, mDNS) — a few minutes. `firmware/README.md` has the milestone roadmap; pinned component
+versions are in `firmware/dependencies.lock`.
+
+## How to build the device (reproduce one)
+
+1. Buy a **Waveshare ESP32-S3-AMOLED-1.91 (touch)** board + a **103450 LiPo** (~2000 mAh).
+2. Order the **carrier PCB** from JLCPCB (Gerbers + assembly BOM/CPL — all parts are LCSC codes in
+   `hardware/carrier-design.md`), or buy it pre-assembled.
+3. Print the enclosure STLs *(coming once the carrier is finalized)*.
+4. Flash the firmware (above, or a web-flasher later); first boot opens a Wi-Fi setup hotspot.
 
 ---
 
