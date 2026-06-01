@@ -7,7 +7,7 @@
 # Build artifacts (ESP-IDF)
 build/
 managed_components/
-dependencies.lock
+# dependencies.lock — tracked (pins working component versions)
 sdkconfig
 sdkconfig.old
 *.log

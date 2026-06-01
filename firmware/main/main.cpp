@@ -42,7 +42,9 @@ extern "C" void app_main(void)
 
     // --- Milestone 1: display + LVGL + touch ---
     // TODO: bring up SH8601 QSPI panel (PIN_LCD_*), LVGL flush, FT3168 touch.
-    //       Show a boot splash. (See ui-prototype/ for the screen designs.)
+    //       Once lv_init + display driver are up, build the UI:
+    //         ui_init();  ui_show(UI_SCREEN_BOOT);
+    //       (UI code lives in main/ui/ — ported from ui-prototype/.)
 
     // --- Milestone 3: WiFi / provisioning ---
     wifi_prov_init();
