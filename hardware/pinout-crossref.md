@@ -59,41 +59,57 @@ gauge-ALRT(1) = 8.
 - [ ] Each FREE GPIO is actually broken out on the 2×20 headers (vs. only on internal pads).
 - [ ] The physical header pin positions (fill the map below from the wiki pinout image / silkscreen).
 
-## Physical 2×20 header map — TO FILL IN FROM THE BOARD
+## Physical header map — VERIFIED from the board
 
-> The header pin *positions* (which pad each GPIO sits on) are only in Waveshare's pinout **image** /
-> schematic, which I couldn't fetch. Fill these from the board silkscreen or the wiki pinout diagram.
-> The board is "Pico-header compatible" (two 1×20 rows, 2.54 mm pitch).
+40-pin "Pico-style" header (numbered 1–40). Confirmed: **every genuinely-free GPIO is broken out**,
+including all 4 free ADC1 pins and the I²C bus.
 
-**Header 1 (left row)**
+| Pin | Signal | | Pin | Signal |
+|---|---|---|---|---|
+| 1 | GPIO43 (U0TX) | | 21 | GPIO34 (PSRAM) |
+| 2 | GPIO44 (U0RX) | | 22 | GPIO35 (PSRAM) |
+| 3 | GND | | 23 | GND |
+| 4 | GPIO0 (BOOT) | | 24 | GPIO36 (PSRAM) |
+| 5 | GPIO1 (BAT_ADC) | | 25 | GPIO37 (PSRAM) |
+| **6** | **GPIO2 — FREE (ADC1)** | | **26** | **GPIO38 — FREE** |
+| **7** | **GPIO3 — FREE (ADC1)** | | 27 | GPIO39 (**I²C SCL**) |
+| 8 | GND | | 28 | GND |
+| **9** | **GPIO11 — FREE** | | 29 | GPIO40 (**I²C SDA**) |
+| **10** | **GPIO12 — FREE** | | 30 | CHIP_UP (charge status?) |
+| **11** | **GPIO13 — FREE** | | **31** | **GPIO4 — FREE (ADC1)** |
+| **12** | **GPIO14 — FREE** | | **32** | **GPIO10 — FREE (ADC1)** |
+| 13 | GND | | 33 | GND |
+| **14** | **GPIO15 — FREE** | | **34** | **GPIO16 — FREE** |
+| 15 | GPIO19 (USB) | | 35 | GPIO17 (AMOLED RST) |
+| 16 | GPIO20 (USB) | | 36 | 3V3 |
+| **17** | **GPIO21 — FREE** | | 37 | 3V3_EN |
+| 18 | GND | | 38 | GND |
+| 19 | GPIO26 (PSRAM/flash) | | 39 | VSYS (system rail, post-charger) |
+| 20 | GPIO33 (PSRAM) | | 40 | VBUS (5 V from USB) |
 
-| Hdr pin | Silkscreen / GPIO | Hdr pin | Silkscreen / GPIO |
-|---|---|---|---|
-| 1 |  | 2 |  |
-| 3 |  | 4 |  |
-| 5 |  | 6 |  |
-| 7 |  | 8 |  |
-| 9 |  | 10 |  |
-| 11 |  | 12 |  |
-| 13 |  | 14 |  |
-| 15 |  | 16 |  |
-| 17 |  | 18 |  |
-| 19 |  | 20 |  |
+**Power available on header:** 3V3 (pin 36), **VSYS** (pin 39 — post-charger battery rail, likely the
+cleanest VBAT tap for the LT3042 audio LDO → carrier may not need separate battery wiring), VBUS/5 V
+(pin 40), GND ×8.
+**Note:** GPIO42 (SD_MOSI) is *not* on the header (irrelevant — SD unused). CHIP_UP (pin 30) is
+likely a charge-status line — possibly useful for the charging-screen UI (confirm from schematic).
 
-**Header 2 (right row)**
+## Carrier → header pin assignment (FINAL pins, header-confirmed)
 
-| Hdr pin | Silkscreen / GPIO | Hdr pin | Silkscreen / GPIO |
-|---|---|---|---|
-| 1 |  | 2 |  |
-| 3 |  | 4 |  |
-| 5 |  | 6 |  |
-| 7 |  | 8 |  |
-| 9 |  | 10 |  |
-| 11 |  | 12 |  |
-| 13 |  | 14 |  |
-| 15 |  | 16 |  |
-| 17 |  | 18 |  |
-| 19 |  | 20 |  |
+| Carrier signal | GPIO | Header pin |
+|---|---|---|
+| I²S MCLK | 11 | 9 |
+| I²S BCLK | 12 | 10 |
+| I²S LRCK | 13 | 11 |
+| I²S SDOUT → DAC | 14 | 12 |
+| I²C SDA / SCL (shared) | 40 / 39 | 29 / 27 |
+| Remote-sense ADC (ADC1) | 2 | 6 |
+| Future mic ADC (ADC1) | 3 | 7 |
+| Jack-detect | 15 | 14 |
+| DRV2605L EN | 16 | 34 |
+| MAX17048 ALRT | 21 | 17 |
+| Spare (ADC1) | 4, 10 | 31, 32 |
+| Spare | 38 | 26 |
+| Power | 3V3 / VSYS / GND | 36 / 39 / many |
 
 ## Tentative carrier assignment (fill in once confirmed)
 | Carrier signal | Proposed GPIO | Confirmed GPIO |
