@@ -19,6 +19,11 @@ typedef enum {
 
 // Result callback: raw JSON result string for a given message_id (chunks may
 // arrive with partial=true; the client accumulates and calls back when whole).
+// NOTE (verified vs live MA 2.8.8): result is a BARE JSON ARRAY of media items.
+// Per item we use: item_id, provider, uri (-> play_media), name, media_type,
+// is_playable; albums also year + artists[]. Album art = metadata.images[] entry
+// with type=="thumb" -> fetch GET {base}/imageproxy?path=<urlenc path>&size=NN
+// (the PATH form, not /imageproxy/{id}).
 typedef void (*ma_result_cb)(const char *json_result, void *user);
 
 // Connect to ws://<server>/ws ; token used if schema_version >= 28.

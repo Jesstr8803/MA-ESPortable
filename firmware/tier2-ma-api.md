@@ -100,9 +100,43 @@ typedef struct { char id[40]; char provider[16]; char name[96];
 4. Now-playing/transport continue via the Sendspin metadata/controller roles as today.
    (We could also target *another* room's queue_id → control other players. Bonus.)
 
-## Open questions for when we build it
-- Exact `result` JSON shape per command (fields of artist/album/track) — capture live from a real
-  server's `/api-docs` or by logging responses; model only the fields the UI shows.
-- C WebSocket client: reuse `esp_websocket_client` (already in the Sendspin stack) for a 2nd socket.
-- JSON: ArduinoJson (already pulled in) — stream-parse chunked/`partial` results to bound memory.
-- Token UX: paste vs. user+pass form on the setup page; store in NVS.
+## Real response shapes — CAPTURED from a live server (MA 2.8.8, schema 29)
+
+Verified against the actual server with `tools/ma_probe.py` (auth'd with a long-lived JWT). Findings:
+
+- **Auth:** server is **schema 29** (≥28) → token **required**. `auth` command returns
+  `{authenticated:true, user:{...}}` on success, or `{error_code:23,"Invalid or expired token"}`.
+  The long-lived token is a **JWT** (from MA Settings → long-lived tokens).
+- **`result` is a bare JSON array** of media-item objects (not wrapped in an envelope field).
+- **Item identity:** `item_id` (string, e.g. `"181"`) + `provider` (e.g. `"library"`), plus a
+  **`uri`** like `library://album/181` / `library://artist/211`. **The uri is what we pass to
+  `play_media`.**
+- **Common fields we model** (per row): `item_id`, `provider`, `uri`, `name`, `media_type`,
+  `is_playable`, `favorite`. Albums also: `year`, `album_type`, and **`artists[]`** (array of mini
+  artist items → subtitle "Artist - Year").
+- ⚠️ **Album art — corrected from our assumption:** items do **not** carry a `proxy_id`. Instead
+  `metadata.images[]` = `[{type:"thumb", path:"<full URL>", provider, remotely_accessible}]`.
+  → use the **path form** of the proxy: `GET {base_url}/imageproxy?path=<url-encoded path>&size=64`
+  (NOT the `/imageproxy/{id}` form). Pick the `type:"thumb"` image.
+- Fields we **ignore**: `provider_mappings`, `external_ids`, `sort_name`, `version`, and most of
+  `metadata` (description/genres/popularity/etc.) — keeps the on-device model tiny.
+
+### Minimal on-device model (updated)
+```c
+typedef struct {
+    char     item_id[16];     // "181"
+    char     provider[20];    // "library"
+    char     uri[64];         // "library://album/181"  -> play_media
+    char     name[96];
+    char     subtitle[96];    // album: "Artist - 2010"; artist: "Artist"
+    char     img_path[160];   // metadata.images[].path (thumb) -> imageproxy?path=...&size=64
+    bool     is_playable;
+} ma_item_t;
+```
+
+## Resolved
+- ✅ Connection, envelope, auth flow, command names — all validated against the live server.
+- ✅ Response field shapes — captured above.
+- C WS client: `esp_websocket_client` (already a dep) for the 2nd socket. JSON: ArduinoJson
+  (stream-parse `partial` chunks to bound memory). Token: stored in NVS (`ma_token`), entered via
+  the setup page.
