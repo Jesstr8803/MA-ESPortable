@@ -90,8 +90,12 @@ From `hardware/reference/ESP32-S3-AMOLED-1.91.pdf` (legend table, coordinate-ext
 - **Battery sense:** GPIO1 (ADC1_CH0)
 - **Reserved by silicon:** 26/33–37 (flash+PSRAM), 0 (BOOT/our button), 19/20 (USB), 43/44 (UART0)
 
-**Genuinely FREE:** **2, 3, 4, 10, 11, 12, 13, 14, 15, 16, 21, 38** (+ **42** if microSD unused).
+**Genuinely FREE:** **2, 3, 4, 10, 11, 12, 13, 14, 15, 16, 21, 38** (all broken out on the header).
 **Free ADC1 (for remote-sense): 2, 3, 4, 10.** 12 free pins — ample.
+
+**microSD: unused.** UI assets compile into the 16 MB flash; album art streams live from MA (cached
+in PSRAM); no local music. SD is muxed with the display bus and SD_MOSI (42) isn't on the header
+anyway — firmware simply doesn't init it. One less thing.
 
 ## ESP32 header pins — carrier assignment *(FINAL, header-confirmed)*
 
