@@ -7,6 +7,7 @@ idf_component_register(
         "mdns_init.cpp"
         "ui/ui.cpp"
         "ui/screen_now_playing.cpp"
+        "ui/screens_aux.cpp"
     INCLUDE_DIRS "." "ui"
     REQUIRES
         nvs_flash esp_wifi esp_netif esp_event
