@@ -72,7 +72,7 @@ void ui_list_add_row(lv_obj_t *list, const char *title, const char *subtitle) {
 
 static lv_obj_t *make_tile(lv_obj_t *parent, const char *icon, const char *label) {
     lv_obj_t *tile = lv_obj_create(parent);
-    lv_obj_set_size(tile, (UI_W - 30) / 2, (UI_W - 30) / 2);
+    lv_obj_set_size(tile, 96, 96);     // two per row within the 220px inner width
     lv_obj_set_style_bg_color(tile, UI_COL_CARD, 0);
     lv_obj_set_style_radius(tile, 14, 0);
     lv_obj_set_style_border_width(tile, 0, 0);
@@ -98,14 +98,16 @@ lv_obj_t *screen_library_create(void) {
     lv_obj_set_size(grid, UI_W, UI_H);
     lv_obj_set_style_bg_color(grid, UI_COL_BG, 0);
     lv_obj_set_style_border_width(grid, 0, 0);
+    lv_obj_clear_flag(grid, LV_OBJ_FLAG_SCROLLABLE);   // don't lay tiles in a scroll row
+    lv_obj_set_style_pad_all(grid, 10, 0);             // outer margin
     lv_obj_set_flex_flow(grid, LV_FLEX_FLOW_ROW_WRAP);
-    lv_obj_set_flex_align(grid, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-    lv_obj_set_style_pad_row(grid, 10, 0);
-    lv_obj_set_style_pad_column(grid, 10, 0);
-    make_tile(grid, LV_SYMBOL_LIST, "Artists");
-    make_tile(grid, LV_SYMBOL_AUDIO, "Albums");
-    make_tile(grid, LV_SYMBOL_DIRECTORY, "Playlists");
-    make_tile(grid, LV_SYMBOL_LIST, "Queue");
+    lv_obj_set_flex_align(grid, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_style_pad_row(grid, 12, 0);
+    lv_obj_set_style_pad_column(grid, 12, 0);
+    ui_attach_tile_cb(make_tile(grid, LV_SYMBOL_LIST, "Artists"), 0);
+    ui_attach_tile_cb(make_tile(grid, LV_SYMBOL_AUDIO, "Albums"), 1);
+    ui_attach_tile_cb(make_tile(grid, LV_SYMBOL_DIRECTORY, "Playlists"), 2);
+    ui_attach_tile_cb(make_tile(grid, LV_SYMBOL_LIST, "Queue"), 3);
     return s;
 }
 
@@ -164,6 +166,7 @@ lv_obj_t *screen_lock_create(void) {
     lv_label_set_text(lockic, LV_SYMBOL_POWER);
     lv_obj_set_style_text_color(lockic, UI_COL_DIM, 0);
     lv_obj_center(lockic);
+    ui_attach_unlock_cb(ring);   // long-press the ring to unlock
 
     lv_obj_t *hint = lv_label_create(s);
     lv_label_set_text(hint, "lift wakes the screen - hold ring to unlock");

@@ -2,6 +2,7 @@
 // LVGL 8.x. All LVGL calls happen from the single UI task (see architecture.md).
 #pragma once
 #include <stdint.h>
+#include "lvgl.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,6 +42,12 @@ ui_screen_t ui_current(void);
 
 // Push fresh now-playing data (call when state changes; UI redraws).
 void ui_update_nowplaying(const ui_nowplaying_t *np);
+
+// Wire a Library tile (index 0=Artists,1=Albums,2=Playlists,3=Queue) to nav.
+void ui_attach_tile_cb(lv_obj_t *tile, int index);
+
+// Wire the lock-screen ring: long-press to unlock.
+void ui_attach_unlock_cb(lv_obj_t *ring);
 
 #ifdef __cplusplus
 }

@@ -71,14 +71,25 @@ static const sh8601_lcd_init_cmd_t s_init_cmds[] = {
 // a DMA scratch and draw to the mapped rectangle on the native 536x240 panel.
 // This avoids LVGL sw_rotate (which produced a 240x240 doubled artifact) and
 // the no-hw-swap_xy limitation.
-static lv_color_t *s_rot = nullptr;   // DMA scratch, holds one rotated area
+static lv_color_t *s_rot = nullptr;   // full rotated frame (PSRAM ok)
 static int         s_rot_px = 0;
+static lv_color_t *s_band = nullptr;  // small internal-DMA band for output
+static int         s_band_px = 0;
+static SemaphoreHandle_t s_tx_done = nullptr;  // signals one band's DMA finished
+
+// esp_lcd color-transfer-done callback: give the semaphore so flush_cb can
+// safely reuse the band buffer for the next chunk.
+static bool color_done_cb(esp_lcd_panel_io_handle_t, esp_lcd_panel_io_event_data_t *, void *) {
+    BaseType_t hp = pdFALSE;
+    xSemaphoreGiveFromISR(s_tx_done, &hp);
+    return hp == pdTRUE;
+}
 
 static void flush_cb(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t *px) {
     auto panel = (esp_lcd_panel_handle_t)drv->user_data;
     const int aw = area->x2 - area->x1 + 1;   // portrait area width  (<=240)
     const int ah = area->y2 - area->y1 + 1;   // portrait area height
-    if (!s_rot || aw * ah > s_rot_px) { lv_disp_flush_ready(drv); return; }
+    if (!s_rot || !s_band || aw * ah > s_rot_px) { lv_disp_flush_ready(drv); return; }
 
     // Rotate 90 deg CCW: portrait (px,py) -> rotated area of size (ah x aw).
     // dst[i,j] where dst width = ah, dst height = aw.
@@ -91,14 +102,21 @@ static void flush_cb(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t *px) 
             s_rot[dy * ah + dx] = c;
         }
     }
-    // Map portrait area -> panel (native 536x240) rectangle.
-    //   panel_x range: from area->y1 .. area->y2          (width  = ah)
-    //   panel_y range: from (UI_W-1-area->x2) .. (UI_W-1-area->x1)  (height = aw)
-    int px1 = area->y1;
-    int px2 = area->y2;
-    int py1 = (UI_W - 1) - area->x2;
-    int py2 = (UI_W - 1) - area->x1;
-    esp_lcd_panel_draw_bitmap(panel, px1, py1, px2 + 1, py2 + 1, s_rot);
+    // Map portrait area -> panel (native 536x240) + emit in horizontal BANDS
+    // through a small internal-DMA buffer (a single full-frame draw from PSRAM
+    // truncates). draw_bitmap is ASYNC, so wait on s_tx_done before reusing the
+    // band buffer (else the next memcpy corrupts the in-flight DMA).
+    int px1 = area->y1;                 // panel x start (width = ah)
+    int py1 = (UI_W - 1) - area->x2;    // panel y start (height = aw)
+    const int rot_w = ah;
+    int rows_per = s_band_px / rot_w;
+    if (rows_per < 1) rows_per = 1;
+    for (int r = 0; r < aw; r += rows_per) {
+        int rh = (r + rows_per <= aw) ? rows_per : (aw - r);
+        memcpy(s_band, &s_rot[(size_t)r * rot_w], (size_t)rh * rot_w * sizeof(lv_color_t));
+        esp_lcd_panel_draw_bitmap(panel, px1, py1 + r, px1 + rot_w, py1 + r + rh, s_band);
+        xSemaphoreTake(s_tx_done, pdMS_TO_TICKS(100));   // wait for this band's DMA
+    }
     lv_disp_flush_ready(drv);
 }
 
@@ -173,8 +191,9 @@ void display_init(void) {
 
     ESP_LOGI(TAG, "install panel IO");
     esp_lcd_panel_io_handle_t io = nullptr;
+    s_tx_done = xSemaphoreCreateBinary();
     const esp_lcd_panel_io_spi_config_t io_cfg =
-        SH8601_PANEL_IO_QSPI_CONFIG(PIN_LCD_CS, nullptr, nullptr);
+        SH8601_PANEL_IO_QSPI_CONFIG(PIN_LCD_CS, color_done_cb, nullptr);
     sh8601_vendor_config_t vendor = {
         .init_cmds = s_init_cmds,
         .init_cmds_size = sizeof(s_init_cmds) / sizeof(s_init_cmds[0]),
@@ -216,26 +235,25 @@ void display_init(void) {
     // FULL_REFRESH portrait: LVGL renders the ENTIRE 240x536 screen into one
     // buffer each frame, so flush_cb always gets the full screen (no partial
     // areas, no stride/rounder ambiguity -> no diagonal skew). flush_cb rotates
-    // the whole frame 90 deg by hand. Full buffer in PSRAM; rotation scratch in
-    // internal DMA RAM... but 240*536*2 = 251 KB won't fit internal. So we
-    // rotate in PSRAM scratch then DMA the full frame from there is also not
-    // DMA-able. Instead: render buffer in PSRAM, rotate into a second PSRAM
-    // buffer, and draw_bitmap copies via the LCD driver (which handles PSRAM
-    // source by bouncing internally on esp_lcd). Keep it simple + correct first.
+    // full_refresh: LVGL hands flush_cb the entire 240x536 frame each time.
+    // Draw buffer + full rotated frame both in PSRAM (251 KB each, won't fit
+    // internal). flush_cb rotates into s_rot, then pushes to the panel in small
+    // internal-DMA BANDS (one big PSRAM->panel DMA truncates).
     size_t full_px = UI_W * UI_H;               // 240*536
     lv_color_t *b1 = (lv_color_t *)heap_caps_malloc(full_px * sizeof(lv_color_t), MALLOC_CAP_SPIRAM);
     assert(b1);
     lv_disp_draw_buf_init(&s_draw_buf, b1, nullptr, full_px);
 
-    // Rotation dst (full frame). Try internal DMA first; fall back to PSRAM.
     s_rot_px = full_px;
-    s_rot = (lv_color_t *)heap_caps_malloc(s_rot_px * sizeof(lv_color_t),
-                                           MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL);
-    if (!s_rot) {
-        ESP_LOGW(TAG, "rot buf: internal DMA full alloc failed, using PSRAM");
-        s_rot = (lv_color_t *)heap_caps_malloc(s_rot_px * sizeof(lv_color_t), MALLOC_CAP_SPIRAM);
-    }
+    s_rot = (lv_color_t *)heap_caps_malloc(s_rot_px * sizeof(lv_color_t), MALLOC_CAP_SPIRAM);
     assert(s_rot);
+
+    // Small internal-DMA band buffer to push the rotated frame to the panel in
+    // chunks (a single full-frame draw_bitmap from PSRAM truncates).
+    s_band_px = PANEL_W * 40;          // 536*40*2 ~= 42 KB internal
+    s_band = (lv_color_t *)heap_caps_malloc(s_band_px * sizeof(lv_color_t),
+                                            MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL);
+    assert(s_band);
 
     lv_disp_drv_init(&s_disp_drv);
     s_disp_drv.hor_res = UI_W;          // 240 portrait (logical)
