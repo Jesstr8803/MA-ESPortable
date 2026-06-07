@@ -40,8 +40,13 @@ void ui_init(void);
 void ui_show(ui_screen_t screen);
 ui_screen_t ui_current(void);
 
-// Push fresh now-playing data (call when state changes; UI redraws).
+// Push fresh now-playing data (call ONLY from the LVGL task; redraws now).
 void ui_update_nowplaying(const ui_nowplaying_t *np);
+
+// Thread-safe: post now-playing from ANY task (copies data, no LVGL calls).
+void ui_post_nowplaying(const ui_nowplaying_t *np);
+// Apply any posted update — call from the LVGL task each loop.
+void ui_pump(void);
 
 // Wire a Library tile (index 0=Artists,1=Albums,2=Playlists,3=Queue) to nav.
 void ui_attach_tile_cb(lv_obj_t *tile, int index);

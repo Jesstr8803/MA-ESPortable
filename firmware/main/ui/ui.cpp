@@ -3,6 +3,9 @@
 #include "lvgl.h"
 #include "ui.h"
 #include "ui_theme.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
+#include <string.h>
 
 // from screen_now_playing.cpp
 lv_obj_t *screen_now_playing_create(void);
@@ -96,4 +99,34 @@ ui_screen_t ui_current(void) { return s_current; }
 
 void ui_update_nowplaying(const ui_nowplaying_t *np) {
     screen_now_playing_update(np);
+}
+
+// --- thread-safe now-playing mailbox --------------------------------------
+// Any task (e.g. the Sendspin client) posts here; the LVGL task drains it via
+// ui_pump(). This keeps ALL LVGL calls on the LVGL task — no cross-task LVGL
+// access, which was freezing the device.
+static SemaphoreHandle_t s_np_mux = nullptr;
+static bool              s_np_dirty = false;
+static ui_nowplaying_t   s_np_pending;
+static char              s_np_title[128], s_np_artist[128], s_np_album[128];
+
+void ui_post_nowplaying(const ui_nowplaying_t *np) {
+    if (!s_np_mux) s_np_mux = xSemaphoreCreateMutex();
+    if (xSemaphoreTake(s_np_mux, pdMS_TO_TICKS(20)) != pdTRUE) return;  // drop if busy
+    strncpy(s_np_title,  np->title  ? np->title  : "", sizeof(s_np_title)  - 1);
+    strncpy(s_np_artist, np->artist ? np->artist : "", sizeof(s_np_artist) - 1);
+    strncpy(s_np_album,  np->album  ? np->album  : "", sizeof(s_np_album)  - 1);
+    s_np_title[sizeof(s_np_title)-1] = s_np_artist[sizeof(s_np_artist)-1] = s_np_album[sizeof(s_np_album)-1] = 0;
+    s_np_pending = *np;
+    s_np_pending.title = s_np_title; s_np_pending.artist = s_np_artist; s_np_pending.album = s_np_album;
+    s_np_dirty = true;
+    xSemaphoreGive(s_np_mux);
+}
+
+// Called from the LVGL task only. Applies any pending now-playing update.
+void ui_pump(void) {
+    if (!s_np_dirty || !s_np_mux) return;
+    if (xSemaphoreTake(s_np_mux, 0) != pdTRUE) return;
+    if (s_np_dirty) { screen_now_playing_update(&s_np_pending); s_np_dirty = false; }
+    xSemaphoreGive(s_np_mux);
 }

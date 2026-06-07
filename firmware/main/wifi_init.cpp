@@ -63,10 +63,12 @@ esp_err_t wifi_start_and_wait(const char* ssid, const char* password, uint32_t t
     esp_wifi_set_protocol(WIFI_IF_STA, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N);
     ESP_ERROR_CHECK(esp_wifi_start());
 
-    // BATTERY DEVICE: modem-sleep power-save (vs predecessor's WIFI_PS_NONE).
-    // The deep audio buffer absorbs the added latency/jitter. Solo listener =
-    // no µs multi-room sync to protect. This is a major battery lever.
-    esp_wifi_set_ps(WIFI_PS_MIN_MODEM);
+    // Power-save OFF during bring-up. WIFI_PS_MIN_MODEM sleeps the radio between
+    // beacons, which adds latency that breaks the Sendspin time-sync (time_burst
+    // timeouts + "late binary" audio). The predecessor ran WIFI_PS_NONE for the
+    // same reason. Re-enable a battery-friendly mode LATER, gated on not-streaming
+    // (and with the deep audio buffer absorbing jitter).
+    esp_wifi_set_ps(WIFI_PS_NONE);
 
     EventBits_t bits = xEventGroupWaitBits(s_group, CONNECTED_BIT | FAIL_BIT,
                                            pdFALSE, pdFALSE, pdMS_TO_TICKS(timeout_ms));

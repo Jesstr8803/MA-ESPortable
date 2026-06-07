@@ -76,13 +76,13 @@ public:
         }
         np.playing = true;
         ESP_LOGI(TAG, "metadata: %s - %s", np.title, np.artist);
-        // LVGL calls must be locked (we're on the sendspin/client task).
-        if (display_lock(100)) { ui_update_nowplaying(&np); display_unlock(); }
+        // Thread-safe post (no LVGL here). The LVGL task applies it via ui_pump.
+        ui_post_nowplaying(&np);
     }
     void on_metadata_clear() override {
         ui_nowplaying_t np = {};
         np.title = "Not playing"; np.artist = ""; np.album = "";
-        if (display_lock(100)) { ui_update_nowplaying(&np); display_unlock(); }
+        ui_post_nowplaying(&np);
     }
 };
 
@@ -122,13 +122,19 @@ static void sendspin_task(void *arg) {
     s_client = &client;
 
     // Player role (stub audio) so MA treats us as a playable endpoint.
+    // We have NO DAC yet and discard audio, so advertise ONLY Opus (lowest
+    // bitrate, ~10x less than FLAC). On weak WiFi this keeps the stream light
+    // enough that it doesn't choke metadata. Add FLAC/PCM back once the carrier
+    // DAC exists and WiFi is solid.
     PlayerRoleConfig pc;
     pc.audio_formats = {
-        {SendspinCodecFormat::FLAC, 2, 48000, 16},
-        {SendspinCodecFormat::FLAC, 2, 44100, 16},
-        {SendspinCodecFormat::PCM,  2, 44100, 16},
+        {SendspinCodecFormat::OPUS, 2, 48000, 16},
     };
-    pc.audio_buffer_capacity = 500000;
+    // 2 MB buffer (in PSRAM) — MA bursts ~2 MB to pre-buffer; a small buffer
+    // overflows instantly ("Failed to send audio chunk") and the player never
+    // reaches ready, so MA never sends metadata. Predecessor used 2 MB.
+    pc.audio_buffer_capacity = 2000000;
+    pc.psram_stack = true;
     auto &player = client.add_player(std::move(pc));
     s_player_listener.player = &player;     // so it can notify_audio_played
     player.set_listener(&s_player_listener);

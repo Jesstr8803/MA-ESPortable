@@ -166,6 +166,7 @@ static void lvgl_task(void *) {
     uint32_t delay_ms = 500;
     while (true) {
         if (display_lock(-1)) {
+            ui_pump();                       // apply any posted now-playing update
             delay_ms = lv_timer_handler();
             display_unlock();
         }
