@@ -31,8 +31,10 @@
 #include "esp_timer.h"
 #include "esp_heap_caps.h"
 #include "esp_log.h"
+#include "driver/i2c.h"
 #include "lvgl.h"
 #include "esp_lcd_sh8601.h"
+#include "touch.h"
 
 static const char *TAG = "display";
 
@@ -123,6 +125,18 @@ static void update_cb(lv_disp_drv_t *drv) {
 
 static void tick_cb(void *) { lv_tick_inc(LVGL_TICK_MS); }
 
+// LVGL touch read callback: pull a portrait-mapped point from the FT3168.
+static void touch_read_cb(lv_indev_drv_t *, lv_indev_data_t *data) {
+    uint16_t x, y;
+    if (touch_read(&x, &y)) {
+        data->point.x = x;
+        data->point.y = y;
+        data->state = LV_INDEV_STATE_PRESSED;
+    } else {
+        data->state = LV_INDEV_STATE_RELEASED;
+    }
+}
+
 bool display_lock(int timeout_ms) {
     const TickType_t t = (timeout_ms < 0) ? portMAX_DELAY : pdMS_TO_TICKS(timeout_ms);
     return xSemaphoreTake(s_lvgl_mux, t) == pdTRUE;
@@ -184,6 +198,19 @@ void display_init(void) {
     esp_lcd_panel_mirror(s_panel, true, false);
     ESP_ERROR_CHECK(esp_lcd_panel_disp_on_off(s_panel, true));
 
+    // Shared I2C bus (touch FT3168 + IMU + future carrier chips). 300 kHz like
+    // the Waveshare demo. SDA=40, SCL=39 (board_pins.h).
+    i2c_config_t i2c = {};
+    i2c.mode = I2C_MODE_MASTER;
+    i2c.sda_io_num = PIN_I2C_SDA;
+    i2c.scl_io_num = PIN_I2C_SCL;
+    i2c.sda_pullup_en = GPIO_PULLUP_ENABLE;
+    i2c.scl_pullup_en = GPIO_PULLUP_ENABLE;
+    i2c.master.clk_speed = 300 * 1000;
+    ESP_ERROR_CHECK(i2c_param_config(I2C_PORT, &i2c));
+    ESP_ERROR_CHECK(i2c_driver_install(I2C_PORT, i2c.mode, 0, 0, 0));
+    touch_init();
+
     ESP_LOGI(TAG, "init LVGL");
     lv_init();
     // FULL_REFRESH portrait: LVGL renders the ENTIRE 240x536 screen into one
@@ -218,6 +245,13 @@ void display_init(void) {
     s_disp_drv.user_data = s_panel;
     s_disp_drv.full_refresh = 1;        // always flush the whole 240x536 frame
     lv_disp_drv_register(&s_disp_drv);
+
+    // Register the FT3168 touch as an LVGL pointer input device.
+    static lv_indev_drv_t indev_drv;
+    lv_indev_drv_init(&indev_drv);
+    indev_drv.type = LV_INDEV_TYPE_POINTER;
+    indev_drv.read_cb = touch_read_cb;
+    lv_indev_drv_register(&indev_drv);
 
     const esp_timer_create_args_t tick_args = { .callback = &tick_cb, .name = "lvgl_tick" };
     esp_timer_handle_t tick = nullptr;
