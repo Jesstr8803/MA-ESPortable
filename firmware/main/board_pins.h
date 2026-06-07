@@ -9,16 +9,15 @@
 // On-board peripherals (fixed by the Waveshare board — do not reassign)
 // ---------------------------------------------------------------------------
 
-// AMOLED display (QSPI)
+// AMOLED display (SH8601, QSPI) — pins from the Waveshare ESP32-S3-AMOLED-1.91
+// ESP-IDF demo (example_qspi_with_ram.c), which is the authoritative map.
 #define PIN_LCD_CS        6
-#define PIN_LCD_DB1       5    // QSPI data
-#define PIN_LCD_DCX_RS    7
-#define PIN_LCD_SDO       8    // (muxed w/ SD_MISO — SD unused)
-#define PIN_LCD_TE        9    // (muxed w/ SD_CS — SD unused)
+#define PIN_LCD_PCLK      47   // QSPI clock
+#define PIN_LCD_DATA0     18
+#define PIN_LCD_DATA1     7
+#define PIN_LCD_DATA2     48
+#define PIN_LCD_DATA3     5
 #define PIN_LCD_RST       17
-#define PIN_LCD_RD_SDI    18
-#define PIN_LCD_WRX_SCL   47   // QSPI clock (muxed w/ SD_CLK — SD unused)
-#define PIN_LCD_DB0       48
 #define LCD_H_RES         536
 #define LCD_V_RES         240
 

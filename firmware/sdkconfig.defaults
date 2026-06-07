@@ -34,6 +34,20 @@ CONFIG_ESP_WIFI_AMPDU_RX_ENABLED=y
 # --- FreeRTOS ---
 CONFIG_FREERTOS_HZ=1000
 
+# --- LVGL display config (must match the panel) ---
+# RGB565, and BYTE-SWAPPED — the SH8601 QSPI panel needs the 16-bit color bytes
+# swapped (Waveshare's working demo sets this; without it the screen is black).
+CONFIG_LV_COLOR_DEPTH_16=y
+CONFIG_LV_COLOR_16_SWAP=y
+
+# --- Task watchdog: don't watch the idle tasks ---
+# The LVGL render task is busy enough that the IDLE task on its core can be
+# starved briefly during full-screen flushes; that's expected for a GUI device
+# (the Waveshare reference config does the same). Keep the WDT enabled for real
+# hangs, but don't trip on idle starvation.
+CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU0=n
+CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU1=n
+
 # --- USB (USB-Serial-JTAG console; native USB free for future USB-DAC mode) ---
 CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y
 

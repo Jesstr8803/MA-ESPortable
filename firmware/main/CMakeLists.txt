@@ -1,6 +1,8 @@
 idf_component_register(
     SRCS
         "main.cpp"
+        "display.cpp"
+        "touch.cpp"
         "app_state.cpp"
         "nvs_store.cpp"
         "wifi_init.cpp"
@@ -13,8 +15,10 @@ idf_component_register(
     INCLUDE_DIRS "." "ui"
     REQUIRES
         nvs_flash esp_wifi esp_netif esp_event
+        esp_driver_spi esp_driver_i2c esp_lcd esp_timer
         espressif__mdns
         espressif__esp_websocket_client
+        espressif__esp_lcd_sh8601
         sendspin__sendspin-cpp
         lvgl__lvgl
 )
