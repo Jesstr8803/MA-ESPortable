@@ -70,44 +70,45 @@ void ui_list_add_row(lv_obj_t *list, const char *title, const char *subtitle) {
 
 // ---- Library: 2x2 tile menu (Artists/Albums top, Playlists/Queue bottom) ---
 
-static lv_obj_t *make_tile(lv_obj_t *parent, const char *icon, const char *label) {
-    lv_obj_t *tile = lv_obj_create(parent);
-    lv_obj_set_size(tile, 96, 96);     // two per row within the 220px inner width
-    lv_obj_set_style_bg_color(tile, UI_COL_CARD, 0);
-    lv_obj_set_style_radius(tile, 14, 0);
-    lv_obj_set_style_border_width(tile, 0, 0);
-    lv_obj_clear_flag(tile, LV_OBJ_FLAG_SCROLLABLE);
+// Full-width menu button: large, easy to tap. icon + label, left-aligned.
+static lv_obj_t *make_menu_btn(lv_obj_t *parent, const char *icon, const char *label) {
+    lv_obj_t *btn = lv_obj_create(parent);
+    lv_obj_set_width(btn, lv_pct(100));
+    lv_obj_set_flex_grow(btn, 1);                       // 4 buttons share the height
+    lv_obj_set_style_bg_color(btn, UI_COL_CARD, 0);
+    lv_obj_set_style_radius(btn, 14, 0);
+    lv_obj_set_style_border_width(btn, 0, 0);
+    lv_obj_clear_flag(btn, LV_OBJ_FLAG_SCROLLABLE);
 
-    lv_obj_t *ic = lv_label_create(tile);
+    lv_obj_t *ic = lv_label_create(btn);
     lv_label_set_text(ic, icon);
     lv_obj_set_style_text_color(ic, UI_COL_ACCENT, 0);
     lv_obj_set_style_text_font(ic, &lv_font_montserrat_14, 0);
-    lv_obj_align(ic, LV_ALIGN_CENTER, 0, -12);
+    lv_obj_align(ic, LV_ALIGN_LEFT_MID, 4, 0);
 
-    lv_obj_t *l = lv_label_create(tile);
+    lv_obj_t *l = lv_label_create(btn);
     lv_label_set_text(l, label);
     lv_obj_set_style_text_color(l, UI_COL_FG, 0);
     lv_obj_set_style_text_font(l, &lv_font_montserrat_14, 0);
-    lv_obj_align(l, LV_ALIGN_CENTER, 0, 14);
-    return tile;
+    lv_obj_align(l, LV_ALIGN_LEFT_MID, 40, 0);
+    return btn;
 }
 
 lv_obj_t *screen_library_create(void) {
     lv_obj_t *s = make_screen();
-    lv_obj_t *grid = lv_obj_create(s);
-    lv_obj_set_size(grid, UI_W, UI_H);
-    lv_obj_set_style_bg_color(grid, UI_COL_BG, 0);
-    lv_obj_set_style_border_width(grid, 0, 0);
-    lv_obj_clear_flag(grid, LV_OBJ_FLAG_SCROLLABLE);   // don't lay tiles in a scroll row
-    lv_obj_set_style_pad_all(grid, 10, 0);             // outer margin
-    lv_obj_set_flex_flow(grid, LV_FLEX_FLOW_ROW_WRAP);
-    lv_obj_set_flex_align(grid, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-    lv_obj_set_style_pad_row(grid, 12, 0);
-    lv_obj_set_style_pad_column(grid, 12, 0);
-    ui_attach_tile_cb(make_tile(grid, LV_SYMBOL_LIST, "Artists"), 0);
-    ui_attach_tile_cb(make_tile(grid, LV_SYMBOL_AUDIO, "Albums"), 1);
-    ui_attach_tile_cb(make_tile(grid, LV_SYMBOL_DIRECTORY, "Playlists"), 2);
-    ui_attach_tile_cb(make_tile(grid, LV_SYMBOL_LIST, "Queue"), 3);
+    lv_obj_t *col = lv_obj_create(s);
+    lv_obj_set_size(col, UI_W, UI_H);
+    lv_obj_set_style_bg_color(col, UI_COL_BG, 0);
+    lv_obj_set_style_border_width(col, 0, 0);
+    lv_obj_clear_flag(col, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_pad_all(col, 10, 0);
+    lv_obj_set_flex_flow(col, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_style_pad_row(col, 10, 0);
+    // 4 full-width buttons stacked, each grows to fill 1/4 of the screen height.
+    ui_attach_tile_cb(make_menu_btn(col, LV_SYMBOL_LIST, "Artists"), 0);
+    ui_attach_tile_cb(make_menu_btn(col, LV_SYMBOL_AUDIO, "Albums"), 1);
+    ui_attach_tile_cb(make_menu_btn(col, LV_SYMBOL_DIRECTORY, "Playlists"), 2);
+    ui_attach_tile_cb(make_menu_btn(col, LV_SYMBOL_LIST, "Queue"), 3);
     return s;
 }
 

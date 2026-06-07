@@ -39,6 +39,10 @@ CONFIG_FREERTOS_HZ=1000
 # swapped (Waveshare's working demo sets this; without it the screen is black).
 CONFIG_LV_COLOR_DEPTH_16=y
 CONFIG_LV_COLOR_16_SWAP=y
+# Extra font sizes for UI hierarchy (title, transport icons).
+CONFIG_LV_FONT_MONTSERRAT_18=y
+CONFIG_LV_FONT_MONTSERRAT_22=y
+CONFIG_LV_FONT_MONTSERRAT_28=y
 
 # --- Task watchdog: don't watch the idle tasks ---
 # The LVGL render task is busy enough that the IDLE task on its core can be

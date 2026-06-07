@@ -38,20 +38,25 @@ lv_obj_t *screen_now_playing_create(void) {
     // --- track text ---
     s_title = lv_label_create(s_screen);
     lv_obj_set_style_text_color(s_title, UI_COL_FG, 0);
-    lv_obj_set_style_text_font(s_title, &lv_font_montserrat_14, 0);
-    lv_label_set_long_mode(s_title, LV_LABEL_LONG_SCROLL_CIRCULAR);  // marquee
+    lv_obj_set_style_text_font(s_title, &lv_font_montserrat_22, 0);
+    // Marquee: fixed width + CIRCULAR scroll. Keep default (left) text align —
+    // center align suppresses the scroll animation. Short titles still look fine
+    // because we set the label width and the text starts at the left edge of it.
     lv_obj_set_width(s_title, UI_W - 24);
-    lv_obj_set_style_text_align(s_title, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_align(s_title, LV_ALIGN_TOP_MID, 0, 212);
+    lv_label_set_long_mode(s_title, LV_LABEL_LONG_SCROLL_CIRCULAR);
+    lv_label_set_text(s_title, "Not playing");
+    lv_obj_align(s_title, LV_ALIGN_TOP_MID, 0, 206);
 
     s_artist = lv_label_create(s_screen);
     lv_obj_set_style_text_color(s_artist, UI_COL_DIM, 0);
-    lv_obj_set_style_text_font(s_artist, &lv_font_montserrat_14, 0);
-    lv_obj_align(s_artist, LV_ALIGN_TOP_MID, 0, 244);
+    lv_obj_set_style_text_font(s_artist, &lv_font_montserrat_18, 0);
+    lv_label_set_text(s_artist, "");
+    lv_obj_align(s_artist, LV_ALIGN_TOP_MID, 0, 240);
 
     s_album = lv_label_create(s_screen);
     lv_obj_set_style_text_color(s_album, UI_COL_DIM2, 0);
     lv_obj_set_style_text_font(s_album, &lv_font_montserrat_14, 0);
+    lv_label_set_text(s_album, "");
     lv_obj_align(s_album, LV_ALIGN_TOP_MID, 0, 268);
 
     // --- progress ---
@@ -65,19 +70,21 @@ lv_obj_t *screen_now_playing_create(void) {
     s_t_elapsed = lv_label_create(s_screen);
     lv_obj_set_style_text_color(s_t_elapsed, UI_COL_DIM2, 0);
     lv_obj_set_style_text_font(s_t_elapsed, &lv_font_montserrat_14, 0);
+    lv_label_set_text(s_t_elapsed, "0:00");
     lv_obj_align(s_t_elapsed, LV_ALIGN_TOP_LEFT, 16, 310);
 
     s_t_total = lv_label_create(s_screen);
     lv_obj_set_style_text_color(s_t_total, UI_COL_DIM2, 0);
     lv_obj_set_style_text_font(s_t_total, &lv_font_montserrat_14, 0);
+    lv_label_set_text(s_t_total, "0:00");
     lv_obj_align(s_t_total, LV_ALIGN_TOP_RIGHT, -16, 310);
 
     // --- transport: prev / play / next ---
     lv_obj_t *prev = lv_label_create(s_screen);
     lv_label_set_text(prev, LV_SYMBOL_PREV);
     lv_obj_set_style_text_color(prev, UI_COL_FG, 0);
-    lv_obj_set_style_text_font(prev, &lv_font_montserrat_14, 0);
-    lv_obj_align(prev, LV_ALIGN_TOP_MID, -70, 340);
+    lv_obj_set_style_text_font(prev, &lv_font_montserrat_28, 0);
+    lv_obj_align(prev, LV_ALIGN_TOP_MID, -72, 335);
 
     lv_obj_t *playbtn = lv_btn_create(s_screen);
     lv_obj_set_size(playbtn, UI_PLAY_D, UI_PLAY_D);
@@ -92,8 +99,8 @@ lv_obj_t *screen_now_playing_create(void) {
     lv_obj_t *next = lv_label_create(s_screen);
     lv_label_set_text(next, LV_SYMBOL_NEXT);
     lv_obj_set_style_text_color(next, UI_COL_FG, 0);
-    lv_obj_set_style_text_font(next, &lv_font_montserrat_14, 0);
-    lv_obj_align(next, LV_ALIGN_TOP_MID, 70, 340);
+    lv_obj_set_style_text_font(next, &lv_font_montserrat_28, 0);
+    lv_obj_align(next, LV_ALIGN_TOP_MID, 72, 335);
 
     // --- volume slider (for headphones w/o inline remote) ---
     s_vol = lv_slider_create(s_screen);
@@ -106,10 +113,10 @@ lv_obj_t *screen_now_playing_create(void) {
 
     // --- shuffle / repeat / lock (icons; events wired in nav layer) ---
     lv_obj_t *row = lv_label_create(s_screen);
-    lv_label_set_text(row, LV_SYMBOL_SHUFFLE "    " LV_SYMBOL_LOOP "    " LV_SYMBOL_POWER);
+    lv_label_set_text(row, LV_SYMBOL_SHUFFLE "      " LV_SYMBOL_LOOP "      " LV_SYMBOL_POWER);
     lv_obj_set_style_text_color(row, UI_COL_DIM, 0);
-    lv_obj_set_style_text_font(row, &lv_font_montserrat_14, 0);
-    lv_obj_align(row, LV_ALIGN_BOTTOM_MID, 0, -20);
+    lv_obj_set_style_text_font(row, &lv_font_montserrat_22, 0);
+    lv_obj_align(row, LV_ALIGN_BOTTOM_MID, 0, -18);
 
     return s_screen;
 }

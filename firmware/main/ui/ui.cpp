@@ -35,12 +35,12 @@ static void screen_gesture_cb(lv_event_t *e) {
             else if (dir == LV_DIR_BOTTOM) ui_show(UI_SCREEN_LOCK);  // swipe down -> Lock
             break;
         case UI_SCREEN_LIBRARY:
-            if (dir == LV_DIR_BOTTOM || dir == LV_DIR_RIGHT) ui_show(UI_SCREEN_NOW_PLAYING);
+            if (dir == LV_DIR_BOTTOM || dir == LV_DIR_LEFT) ui_show(UI_SCREEN_NOW_PLAYING);
             break;
         case UI_SCREEN_LIST:
         case UI_SCREEN_QUEUE:
         case UI_SCREEN_SETTINGS:
-            if (dir == LV_DIR_RIGHT || dir == LV_DIR_BOTTOM) nav_back();
+            if (dir == LV_DIR_LEFT || dir == LV_DIR_BOTTOM) nav_back();  // swipe left = back
             break;
         default: break;
     }
