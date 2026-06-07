@@ -27,3 +27,6 @@ tools/waveshare-factory/*.bin
 
 # Local secrets (WiFi creds, MA token) — NEVER commit
 firmware/main/secrets.h
+
+# Debug serial captures
+firmware/serial_capture.txt

@@ -18,12 +18,20 @@ CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
 # --- CPU ---
 CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y
 
-# --- WiFi / lwIP tuning (predecessor: big TCP windows cured audio stutter) ---
+# --- WiFi / lwIP tuning (matched to the predecessor's proven sendspin config) ---
 # NOTE: predecessor ran WIFI_PS_NONE + max TX power (mains device). This is a
 # BATTERY device + SOLO listener, so power-save is enabled at runtime and the
 # deep audio buffer covers the jitter. Buffers stay large for glitch-free play.
+# CRITICAL: LWIP_MAX_SOCKETS must be high enough for WiFi + the Sendspin httpd
+# server + MA's connection; too low -> httpd thread lwip TLS null-deref crash.
+CONFIG_LWIP_MAX_SOCKETS=16
+CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP=y
+CONFIG_LWIP_TCP_SND_BUF_DEFAULT=65535
+CONFIG_LWIP_TCP_RCV_BUF_DEFAULT=65535
 CONFIG_LWIP_TCP_WND_DEFAULT=65535
+CONFIG_LWIP_TCP_MSS=1440
 CONFIG_LWIP_TCP_RECVMBOX_SIZE=64
+CONFIG_LWIP_UDP_RECVMBOX_SIZE=64
 CONFIG_LWIP_TCPIP_RECVMBOX_SIZE=64
 CONFIG_ESP_WIFI_STATIC_RX_BUFFER_NUM=16
 CONFIG_ESP_WIFI_DYNAMIC_RX_BUFFER_NUM=64
@@ -57,3 +65,8 @@ CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y
 
 # --- Logging ---
 CONFIG_LOG_DEFAULT_LEVEL_INFO=y
+CONFIG_LOG_MAXIMUM_LEVEL_DEBUG=y
+
+# Bring-up: detect + NAME a task that overflows its stack (vs corrupted crash).
+CONFIG_FREERTOS_CHECK_STACKOVERFLOW_CANARY=y
+CONFIG_ESP_SYSTEM_PANIC_PRINT_REBOOT=y

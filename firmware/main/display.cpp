@@ -63,7 +63,7 @@ static const sh8601_lcd_init_cmd_t s_init_cmds[] = {
     {0x2B, (uint8_t[]){0x00, 0x00, 0x00, 0xEF}, 4, 0},
     {0x51, (uint8_t[]){0x00}, 1, 10},
     {0x29, (uint8_t[]){0x00}, 0, 10},
-    {0x51, (uint8_t[]){0xFF}, 1, 0},                            // brightness max
+    {0x51, (uint8_t[]){0x99}, 1, 0},                            // brightness ~60% (was 0xFF; cut peak current to avoid brownout)
 };
 
 // MANUAL portrait rotation in the flush (LVGL itself runs un-rotated at

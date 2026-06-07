@@ -1,0 +1,12 @@
+--- a/managed_components/sendspin__sendspin-cpp/src/esp/ws_server.cpp
++++ b/managed_components/sendspin__sendspin-cpp/src/esp/ws_server.cpp
+@@ -64,6 +64,9 @@ bool SendspinWsServer::start(SendspinClient* client, bool task_stack_in_psram,
+
+     // Configure the HTTP server
+     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
++    // PATCH (MA-ESPortable): the default httpd stack (4096) overflows during the
++    // Music Assistant WebSocket handshake -> "stack overflow in task httpd".
++    config.stack_size = 10240;
+     if (task_stack_in_psram) {
+         config.task_caps = MALLOC_CAP_SPIRAM;
+     }

@@ -20,6 +20,7 @@
 #include "wifi_provisioning.h"
 #include "display.h"
 #include "ui/ui.h"
+#include "sendspin_client.h"
 #include "secrets.h"   // LOCAL, gitignored: SECRET_WIFI_SSID/PASS/MA_URL
 
 #include "esp_log.h"
@@ -54,6 +55,8 @@ extern "C" void app_main(void)
     esp_err_t werr = wifi_start_and_wait(SECRET_WIFI_SSID, SECRET_WIFI_PASS, 30000);
     if (werr == ESP_OK) {
         ESP_LOGI(TAG, "WiFi connected");
+        // --- Milestone 5: Sendspin -> Music Assistant (now-playing + transport) ---
+        sendspin_start("MA-ESPortable");
     } else {
         ESP_LOGW(TAG, "WiFi connect failed (err=%d) — continuing offline", werr);
     }
