@@ -16,9 +16,11 @@
 // Most of milestones 1-6 run on the BARE Waveshare board (no carrier needed).
 
 #include "board_pins.h"
+#include "wifi_init.h"
 #include "wifi_provisioning.h"
 #include "display.h"
 #include "ui/ui.h"
+#include "secrets.h"   // LOCAL, gitignored: SECRET_WIFI_SSID/PASS/MA_URL
 
 #include "esp_log.h"
 #include "nvs_flash.h"
@@ -44,11 +46,18 @@ extern "C" void app_main(void)
 
     // --- Milestone 1: display + LVGL + UI ---
     display_init();             // SH8601 QSPI panel + LVGL + lvgl task + ui_init()
-    if (display_lock(-1)) { ui_show(UI_SCREEN_NOW_PLAYING); display_unlock(); }
-    // TODO: FT3168 touch input device; then nav events.
+    if (display_lock(-1)) { ui_show(UI_SCREEN_BOOT); display_unlock(); }
 
-    // --- Milestone 3: WiFi / provisioning ---
-    wifi_prov_init();
+    // --- Milestone 3: WiFi (temporary hardcoded creds from secrets.h) ---
+    // TODO: replace with NVS-stored creds + SoftAP captive-portal provisioning.
+    if (display_lock(-1)) { ui_show(UI_SCREEN_CONNECTING); display_unlock(); }
+    esp_err_t werr = wifi_start_and_wait(SECRET_WIFI_SSID, SECRET_WIFI_PASS, 30000);
+    if (werr == ESP_OK) {
+        ESP_LOGI(TAG, "WiFi connected");
+    } else {
+        ESP_LOGW(TAG, "WiFi connect failed (err=%d) — continuing offline", werr);
+    }
+    if (display_lock(-1)) { ui_show(UI_SCREEN_NOW_PLAYING); display_unlock(); }
 
     // --- Milestone 4: IMU (QMI8658) for wake-on-pickup ---
     // TODO: init over I2C (I2C_ADDR_IMU), motion interrupt on PIN_IMU_INT1.

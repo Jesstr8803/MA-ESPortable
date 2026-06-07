@@ -24,3 +24,6 @@ hardware/reference/*
 
 # Waveshare factory binary (large, redistribution-iffy) — keep local
 tools/waveshare-factory/*.bin
+
+# Local secrets (WiFi creds, MA token) — NEVER commit
+firmware/main/secrets.h
