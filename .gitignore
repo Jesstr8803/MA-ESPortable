@@ -21,3 +21,6 @@ Thumbs.db
 # Keep the folder's README tracked; ignore the dropped binaries.
 hardware/reference/*
 !hardware/reference/README.md
+
+# Waveshare factory binary (large, redistribution-iffy) — keep local
+tools/waveshare-factory/*.bin
